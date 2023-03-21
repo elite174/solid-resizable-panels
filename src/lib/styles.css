@@ -1,0 +1,15 @@
+.solid-panel {
+  display: flex;
+}
+
+.solid-panel_vertical {
+  flex-direction: column;
+}
+
+.solid-panel_reverse {
+  flex-direction: row-reverse;
+}
+
+.solid-panel_vertical.solid-panel_reverse {
+  flex-direction: column-reverse;
+}
