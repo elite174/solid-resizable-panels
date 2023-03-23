@@ -8,23 +8,27 @@ import {
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { SOLID_PANEL_ATTRIBUTE_NAME } from "./constants";
+
+import { useResize } from "./hooks/use-resize";
+import { SolidPanelStateAdapter } from "./store";
+import { Direction } from "./types";
+
 import { makeLogText } from "./utils/log";
 
-interface Props {
-  config: {
-    id: string;
-    size: number;
-    minSize?: number;
-    maxSize?: number;
-  }[];
-  direction?: "vertical" | "horizontal";
+interface Props extends SolidPanelStateAdapter {
+  direction?: Direction;
   tag?: string;
   class?: string;
   reverse?: boolean;
+  zoom?: number;
+  scale?: number;
 }
 
 export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
-  const props = mergeProps({ tag: "div" }, initialProps);
+  const props = mergeProps(
+    { tag: "div", zoom: 1, scale: 1, direction: "horizontal" as Direction },
+    initialProps
+  );
 
   const resolvedChildren = createMemo<Element[]>(() => {
     const resolvedChildrenArray = children(() => props.children).toArray();
@@ -49,6 +53,13 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
     return validChildren;
   });
 
+  const { createMouseDownHandler } = useResize({
+    zoom: () => props.zoom,
+    scale: () => props.scale,
+    direction: () => props.direction,
+    onSizeChange: props.onSizeChange,
+  });
+
   return (
     <Dynamic
       component={props.tag}
@@ -60,7 +71,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
       }}
       style={{}}
     >
-      <For each={props.config}>
+      <For each={props.state.config}>
         {(item, index) => {
           const child = () =>
             resolvedChildren().find(
@@ -68,16 +79,20 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                 element.getAttribute(SOLID_PANEL_ATTRIBUTE_NAME) === item.id
             );
 
-          const isLast = () => index() === props.config.length - 1;
+          const isLast = () => index() === props.state.config.length - 1;
 
           return (
             <Show when={child()} keyed>
               {(content) => {
                 return (
                   <>
-                    <div>{content}</div>
+                    <div style={{ "flex-grow": item.size }}>{content}</div>
                     <Show when={!isLast()}>
-                      <button class="resize-handle"></button>
+                      <button
+                        data-solid-panel-resize-handle
+                        class="resize-handle"
+                        onMouseDown={createMouseDownHandler(item.id)}
+                      ></button>
                     </Show>
                   </>
                 );
