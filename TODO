@@ -1,0 +1,3 @@
+- handle missing children
+    The config may have more items than children. For instance, there might be 3 items in the config,
+    however there were only 2 children

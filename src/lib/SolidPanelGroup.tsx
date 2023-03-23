@@ -5,9 +5,11 @@ import {
   For,
   createMemo,
   Show,
+  createSignal,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { SOLID_PANEL_ATTRIBUTE_NAME } from "./constants";
+import { useAvailableSpace } from "./hooks/use-available-space";
 
 import { useResize } from "./hooks/use-resize";
 import { SolidPanelStateAdapter } from "./store";
@@ -15,19 +17,25 @@ import { Direction } from "./types";
 
 import { makeLogText } from "./utils/log";
 
-interface Props extends SolidPanelStateAdapter {
+interface Props {
   direction?: Direction;
   tag?: string;
   class?: string;
   reverse?: boolean;
   zoom?: number;
   scale?: number;
+  state: SolidPanelStateAdapter["state"];
+  onLayoutChange: SolidPanelStateAdapter["onLayoutChange"];
 }
 
 export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
   const props = mergeProps(
     { tag: "div", zoom: 1, scale: 1, direction: "horizontal" as Direction },
     initialProps
+  );
+
+  const [container, setContainer] = createSignal<HTMLElement | undefined>(
+    undefined
   );
 
   const resolvedChildren = createMemo<Element[]>(() => {
@@ -53,23 +61,31 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
     return validChildren;
   });
 
+  const containerSize = useAvailableSpace({
+    container,
+    direction: () => props.direction,
+  });
+
   const { createMouseDownHandler } = useResize({
     zoom: () => props.zoom,
     scale: () => props.scale,
     direction: () => props.direction,
-    onSizeChange: props.onSizeChange,
+    onSizeChange: props.onLayoutChange,
+    state: () => props.state,
+    containerSize,
+    container,
   });
 
   return (
     <Dynamic
       component={props.tag}
+      ref={setContainer}
       classList={{
         ["solid-panel"]: true,
         ["solid-panel_vertical"]: props.direction === "vertical",
         ["solid-panel_reverse"]: Boolean(props.reverse),
         [props.class ?? ""]: true,
       }}
-      style={{}}
     >
       <For each={props.state.config}>
         {(item, index) => {
@@ -86,10 +102,11 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
               {(content) => {
                 return (
                   <>
-                    <div style={{ "flex-grow": item.size }}>{content}</div>
+                    <div style={{ "flex-grow": item.flexGrow }}>{content}</div>
                     <Show when={!isLast()}>
                       <button
                         data-solid-panel-resize-handle
+                        style={{ width: "300px" }}
                         class="resize-handle"
                         onMouseDown={createMouseDownHandler(item.id)}
                       ></button>

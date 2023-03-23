@@ -1,4 +1,4 @@
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce, reconcile } from "solid-js/store";
 import { ConfigItem } from "../types";
 
 interface Params {
@@ -8,10 +8,14 @@ interface Params {
 export const createPanelStore = ({ config }: Params) => {
   const [state, setState] = createStore({ config }, { name: "PanelStore" });
 
-  const setConfig = (newConfig: ConfigItem[]) =>
-    setState({ config: newConfig });
+  const setConfig = (config: ConfigItem[]) =>
+    setState("config", reconcile(config));
 
-  const onSizeChange = (deltaSize: number, handleAfterItemWithId: string) => {
+  const onLayoutChange = (
+    deltaSize: number,
+    handleAfterItemWithId: string,
+    stateBeforeResize: { id: string; flexGrow: number }[]
+  ) => {
     const currentItemIndex = state.config.findIndex(
       (item) => item.id === handleAfterItemWithId
     );
@@ -25,32 +29,33 @@ export const createPanelStore = ({ config }: Params) => {
 
         for (let i = currentItemIndex + 1; i < s.config.length; i++) {
           const currentItem = s.config[i];
-          const newSize = currentItem.size + deltaSize;
-          const minSize = currentItem.minSize ?? 0;
-          const maxSize = currentItem.maxSize ?? Infinity;
 
-          if (newSize < minSize) {
+          const newFlexGrow = stateBeforeResize[i].flexGrow - deltaSize;
+          const minSize = currentItem.minFlexGrow ?? 0;
+          const maxSize = currentItem.maxFlexGrow ?? Infinity;
+
+          if (newFlexGrow < minSize) {
             if (currentItem.collapsible && !currentItem.collapsed) {
               currentItem.collapsed = true;
               break;
             } else continue;
           }
 
-          if (newSize >= minSize && newSize <= maxSize) {
-            currentItem.size = newSize;
+          if (newFlexGrow >= minSize && newFlexGrow <= maxSize) {
+            currentItem.flexGrow = newFlexGrow;
             sizeChanged = true;
             break;
           }
 
-          if (newSize > maxSize) continue;
+          if (newFlexGrow > maxSize) continue;
         }
 
         if (sizeChanged) {
           for (let i = currentItemIndex; i >= 0; i--) {
             const currentItem = s.config[i];
-            const newSize = currentItem.size - deltaSize;
-            const minSize = currentItem.minSize ?? 0;
-            const maxSize = currentItem.maxSize ?? Infinity;
+            const newSize = stateBeforeResize[i].flexGrow + deltaSize;
+            const minSize = currentItem.minFlexGrow ?? 0;
+            const maxSize = currentItem.maxFlexGrow ?? Infinity;
 
             if (newSize < minSize) {
               if (currentItem.collapsible && !currentItem.collapsed) {
@@ -60,7 +65,7 @@ export const createPanelStore = ({ config }: Params) => {
             }
 
             if (newSize >= minSize && newSize <= maxSize) {
-              currentItem.size = newSize;
+              currentItem.flexGrow = newSize;
               break;
             }
 
@@ -74,7 +79,7 @@ export const createPanelStore = ({ config }: Params) => {
   return {
     state,
     setConfig,
-    onSizeChange,
+    onLayoutChange,
   };
 };
 

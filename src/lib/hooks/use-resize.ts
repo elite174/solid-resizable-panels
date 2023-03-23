@@ -1,16 +1,33 @@
-import { Accessor, createEffect, createSignal, onCleanup } from "solid-js";
-import { SOLID_PANEL_ATTRIBUTE_NAME } from "../constants";
+import {
+  Accessor,
+  createEffect,
+  createSignal,
+  onCleanup,
+  untrack,
+} from "solid-js";
 import { SolidPanelStateAdapter } from "../store";
 import type { Direction } from "../types";
+import { roundTo4Digits } from "../utils/math";
 
 import { CorrectionAccessors, createMouseDelta } from "../utils/mouse-delta";
 
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
-  onSizeChange: SolidPanelStateAdapter["onSizeChange"];
+  state: Accessor<SolidPanelStateAdapter["state"]>;
+  onSizeChange: SolidPanelStateAdapter["onLayoutChange"];
+  containerSize: Accessor<number>;
+  container: Accessor<HTMLElement | undefined>;
 }
 
-export const useResize = ({ zoom, scale, direction, onSizeChange }: Params) => {
+export const useResize = ({
+  zoom,
+  scale,
+  direction,
+  onSizeChange,
+  state,
+  containerSize,
+  container,
+}: Params) => {
   const mouseDelta = createMouseDelta({
     zoom,
     scale,
@@ -31,9 +48,14 @@ export const useResize = ({ zoom, scale, direction, onSizeChange }: Params) => {
   };
 
   createEffect(() => {
-    const resizeStarted = beforeItemId();
-    if (resizeStarted) {
+    const itemId = beforeItemId();
+
+    if (itemId) {
       const handleMouseMove = (e: MouseEvent) => mouseDelta.computeDelta(e);
+
+      const stateBeforeResize = untrack(() =>
+        state().config.map((item) => ({ id: item.id, flexGrow: item.flexGrow }))
+      );
 
       const handleMouseUp = () => {
         resizeElement = null;
@@ -45,11 +67,28 @@ export const useResize = ({ zoom, scale, direction, onSizeChange }: Params) => {
       document.addEventListener("mouseup", handleMouseUp, { once: true });
 
       createEffect(() => {
+        const containerElement = container();
+
+        if (!containerElement) return;
+
         const isHorizontal = () => direction() === "horizontal";
-        const deltaSize = () =>
+        const deltaPX = () =>
           isHorizontal() ? mouseDelta.deltaX() : mouseDelta.deltaY();
 
-        onSizeChange(deltaSize(), resizeStarted);
+        const computeDeltaFlexGrow = (deltaPX: number) =>
+          untrack(() => {
+            const flexGrowSum = roundTo4Digits(
+              state().config.reduce((sum, item) => item.flexGrow + sum, 0)
+            );
+
+            return roundTo4Digits(
+              (deltaPX * flexGrowSum) / roundTo4Digits(containerSize())
+            );
+          });
+
+        const deltaGrow = computeDeltaFlexGrow(deltaPX());
+
+        onSizeChange(deltaGrow, itemId, stateBeforeResize);
       });
 
       onCleanup(() => {

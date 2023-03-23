@@ -6,18 +6,27 @@ import "./lib/styles.css";
 import styles from "./App.module.css";
 
 const App: Component = () => {
+  const { setConfig, ...adapter } = createPanelStore({
+    config: [
+      { id: "1", flexGrow: 100, collapsible: false },
+      { id: "2", flexGrow: 100 },
+    ],
+  });
+  
+  setTimeout(() => {
+    setConfig([
+      { id: "1", flexGrow: 1, collapsible: false },
+      { id: "2", flexGrow: 1 },
+      { id: "3", flexGrow: 1 },
+    ]);
+  }, 5000);
+
   return (
     <div class={styles.App}>
-      <SolidPanelGroup
-        {...createPanelStore({
-          config: [
-            { id: "1", size: 100, collapsible: false },
-            { id: "2", size: 100 },
-          ],
-        })}
-      >
+      <SolidPanelGroup {...adapter}>
         <div data-solid-panel-id="1">hi</div>
         <div data-solid-panel-id="2">2</div>
+        <div data-solid-panel-id="3">3</div>
       </SolidPanelGroup>
     </div>
   );

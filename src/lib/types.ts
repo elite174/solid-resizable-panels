@@ -1,8 +1,8 @@
 export type ConfigItem = {
   id: string;
-  size: number;
-  minSize?: number;
-  maxSize?: number;
+  flexGrow: number;
+  minFlexGrow?: number;
+  maxFlexGrow?: number;
 } & (
   | { collapsible?: false; collapsed?: never }
   | { collapsible?: true; collapsed?: boolean }
