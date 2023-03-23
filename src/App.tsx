@@ -12,7 +12,7 @@ const App: Component = () => {
       { id: "2", flexGrow: 100 },
     ],
   });
-  
+
   setTimeout(() => {
     setConfig([
       { id: "1", flexGrow: 1, collapsible: false },
