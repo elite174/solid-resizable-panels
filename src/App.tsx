@@ -11,10 +11,10 @@ const App: Component = () => {
       {
         id: "1",
         flexGrow: 100,
-        collapsible: false,
-        maxFlexGrow: 120,
       },
       { id: "2", flexGrow: 100, minFlexGrow: 50 },
+      { id: "3", flexGrow: 100, minFlexGrow: 50 },
+      { id: "4", flexGrow: 100, minFlexGrow: 50 },
     ],
   });
 
@@ -32,6 +32,7 @@ const App: Component = () => {
         <div data-solid-panel-id="1">hi</div>
         <div data-solid-panel-id="2">2</div>
         <div data-solid-panel-id="3">3</div>
+        <div data-solid-panel-id="4">4</div>
       </SolidPanelGroup>
     </div>
   );

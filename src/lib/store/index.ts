@@ -1,100 +1,120 @@
 import { createStore, produce, reconcile } from "solid-js/store";
 
 import { ConfigItem } from "../types";
+import { clamp, roundTo4Digits } from "../utils/math";
 
 interface Params {
   config: ConfigItem[];
 }
 
-const getAllowedDeltaSize = (
-  currentItem: ConfigItem,
-  currentItemBeforeResize: { flexGrow: number },
+const generateNewState = (
+  layout: ConfigItem[],
+  stateOnResizeStart: { flexGrow: number }[],
+  resizableItemIndex: number,
   deltaSize: number
 ) => {
-  let allowedDeltaSize = deltaSize;
+  const result: ({ flexGrow: number } | undefined)[] = new Array(
+    stateOnResizeStart.length
+  );
+  const deltaSizeAbs = Math.abs(deltaSize);
+  let remainingDeltaSizeLeftAbs = deltaSizeAbs;
 
-  const newFlexGrow = currentItem.flexGrow + allowedDeltaSize;
-  const minSize = currentItem.minFlexGrow ?? 0;
-  const maxSize = currentItem.maxFlexGrow ?? Infinity;
-
-  if (newFlexGrow < minSize) {
-    // There's an edge case: deltaSize is too big to shrink, however there's some space to shrink
-    // So here we need to compute smaller deltaSize to apply later
-    if (currentItem.flexGrow > minSize) {
-      return currentItemBeforeResize.flexGrow - minSize;
-    }
-  } else if (newFlexGrow >= minSize && newFlexGrow <= maxSize) {
-    return Math.abs(allowedDeltaSize);
-  } else if (newFlexGrow > maxSize) {
-    // There's an edge case: deltaSize is too big to grow, however there's some space to grow
-    // So here we need to compute smaller deltaSize to apply later
-    if (currentItem.flexGrow < maxSize) {
-      return maxSize - currentItemBeforeResize.flexGrow;
-    }
-  }
-
-  return null;
-};
-
-const findItemsToResize = (
-  currentItemIndex: number,
-  deltaSize: number,
-  layout: Readonly<Readonly<ConfigItem>[]>,
-  stateBeforeResize: { id: string; flexGrow: number }[]
-) => {
-  let itemToChangeFromRight;
-
-  for (let i = currentItemIndex + 1; i < layout.length; i++) {
-    const currentItem = layout[i];
-
-    const allowedDeltaSize = getAllowedDeltaSize(
-      currentItem,
-      stateBeforeResize[i],
-      // If the item is from right, we need to
-      -deltaSize
-    );
-
-    if (allowedDeltaSize !== null) {
-      itemToChangeFromRight = {
-        index: i,
-        allowedDeltaSize,
-      };
-    }
-  }
-
-  if (!itemToChangeFromRight) return null;
-
-  let itemToChangeFromLeft;
-
-  for (let i = currentItemIndex; i >= 0; i--) {
-    const currentItem = layout[i];
-
-    const allowedDeltaSize = getAllowedDeltaSize(
-      currentItem,
-      stateBeforeResize[i],
-      deltaSize
-    );
-
-    if (allowedDeltaSize !== null) {
-      itemToChangeFromLeft = {
-        index: i,
-        allowedDeltaSize,
-      };
-    }
-  }
-
-  if (!itemToChangeFromLeft) return null;
-
-  return {
-    leftIndex: itemToChangeFromLeft.index,
-    rightIndex: itemToChangeFromRight.index,
-    deltaSize:
-      Math.sign(deltaSize) *
-      Math.min(
-        itemToChangeFromLeft.allowedDeltaSize,
-        itemToChangeFromRight.allowedDeltaSize
+  // Firstly try to change the left side
+  for (let i = resizableItemIndex; i >= 0; i--) {
+    const patchItem = {
+      flexGrow: clamp(
+        stateOnResizeStart[i].flexGrow +
+          remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+        layout[i].minFlexGrow ?? 0,
+        layout[i].maxFlexGrow ?? Infinity
       ),
-  };
+    };
+
+    remainingDeltaSizeLeftAbs = roundTo4Digits(
+      remainingDeltaSizeLeftAbs -
+        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    );
+
+    result[i] = patchItem;
+
+    if (remainingDeltaSizeLeftAbs === 0) break;
+  }
+
+  let remainingDeltaSizeRightAbs = deltaSizeAbs;
+
+  // Now try to change right side
+  for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+    const patchItem = {
+      flexGrow: clamp(
+        // Minus here is because we're changing right side
+        stateOnResizeStart[i].flexGrow -
+          remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+        layout[i].minFlexGrow ?? 0,
+        layout[i].maxFlexGrow ?? Infinity
+      ),
+    };
+
+    remainingDeltaSizeRightAbs = roundTo4Digits(
+      remainingDeltaSizeRightAbs -
+        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    );
+
+    result[i] = patchItem;
+
+    if (remainingDeltaSizeRightAbs === 0) break;
+  }
+
+  // here we need to correct left side
+  // because we can't resize it more than right side
+  if (remainingDeltaSizeLeftAbs < remainingDeltaSizeRightAbs) {
+    remainingDeltaSizeLeftAbs = deltaSizeAbs - remainingDeltaSizeRightAbs;
+
+    for (let i = resizableItemIndex; i >= 0; i--) {
+      const patchItem = {
+        flexGrow: clamp(
+          stateOnResizeStart[i].flexGrow +
+            remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+          layout[i].minFlexGrow ?? 0,
+          layout[i].maxFlexGrow ?? Infinity
+        ),
+      };
+
+      remainingDeltaSizeLeftAbs = roundTo4Digits(
+        remainingDeltaSizeLeftAbs -
+          Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+      );
+
+      result[i] = patchItem;
+
+      if (remainingDeltaSizeLeftAbs === 0) break;
+    }
+    // but here we need to correct right side
+  } else if (remainingDeltaSizeLeftAbs > remainingDeltaSizeRightAbs) {
+    remainingDeltaSizeRightAbs = deltaSizeAbs - remainingDeltaSizeLeftAbs;
+
+    for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+      const patchItem = {
+        flexGrow: clamp(
+          // Minus here is because we're changing right side
+          stateOnResizeStart[i].flexGrow -
+            remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+          layout[i].minFlexGrow ?? 0,
+          layout[i].maxFlexGrow ?? Infinity
+        ),
+      };
+
+      remainingDeltaSizeRightAbs = roundTo4Digits(
+        remainingDeltaSizeRightAbs -
+          Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+      );
+
+      result[i] = patchItem;
+
+      if (remainingDeltaSizeRightAbs === 0) break;
+    }
+  }
+
+  return result;
 };
 
 export const createPanelStore = ({ config }: Params) => {
@@ -115,25 +135,22 @@ export const createPanelStore = ({ config }: Params) => {
     // TODO handle error somehow
     if (currentItemIndex === -1) return;
 
-    const itemsToResize = findItemsToResize(
-      currentItemIndex,
-      deltaSize,
+    const patch = generateNewState(
       state.config,
-      stateOnResizeStart
+      stateOnResizeStart,
+      currentItemIndex,
+      deltaSize
     );
 
-    if (itemsToResize) {
-      setState(
-        produce((s) => {
-          s.config[itemsToResize.leftIndex].flexGrow =
-            stateOnResizeStart[itemsToResize.leftIndex].flexGrow +
-            itemsToResize.deltaSize;
-          s.config[itemsToResize.rightIndex].flexGrow =
-            stateOnResizeStart[itemsToResize.rightIndex].flexGrow -
-            itemsToResize.deltaSize;
-        })
-      );
-    }
+    setState(
+      produce((s) => {
+        for (let i = 0; i < patch.length; i++) {
+          const patchItem = patch[i];
+
+          if (patchItem) s.config[i].flexGrow = patchItem.flexGrow;
+        }
+      })
+    );
   };
 
   return {

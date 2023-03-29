@@ -110,7 +110,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                     <Show when={!isLast()}>
                       <button
                         data-solid-panel-resize-handle
-                        style={{ width: "300px" }}
+                        //style={{ width: "300px" }}
                         class="resize-handle"
                         onMouseDown={createMouseDownHandler(item.id)}
                       ></button>

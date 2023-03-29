@@ -84,9 +84,6 @@ export const useResize = ({
 
         const computeDeltaFlexGrow = (deltaPX: number) =>
           untrack(() => {
-            //console.log(deltaPX, totalFlexGrow, containerSize());
-
-            console.log(deltaPX);
             return roundTo4Digits(
               // Assume here, that the sum is always the same.
               // TODO: change this logic in state setter
