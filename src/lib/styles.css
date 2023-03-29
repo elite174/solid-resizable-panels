@@ -13,3 +13,8 @@
 .solid-panel_vertical.solid-panel_reverse {
   flex-direction: column-reverse;
 }
+
+.resize-handle {
+  flex-grow: 0;
+  flex-shrink: 0;
+}

@@ -9,7 +9,6 @@ import {
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { SOLID_PANEL_ATTRIBUTE_NAME } from "./constants";
-import { useAvailableSpace } from "./hooks/use-available-space";
 
 import { useResize } from "./hooks/use-resize";
 import { SolidPanelStateAdapter } from "./store";
@@ -26,6 +25,8 @@ interface Props {
   scale?: number;
   state: SolidPanelStateAdapter["state"];
   onLayoutChange: SolidPanelStateAdapter["onLayoutChange"];
+  onCollapse?: (panelId: string) => void;
+  onReveal?: (panelId: string) => void;
 }
 
 export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
@@ -61,18 +62,12 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
     return validChildren;
   });
 
-  const containerSize = useAvailableSpace({
-    container,
-    direction: () => props.direction,
-  });
-
   const { createMouseDownHandler } = useResize({
     zoom: () => props.zoom,
     scale: () => props.scale,
     direction: () => props.direction,
     onSizeChange: props.onLayoutChange,
     state: () => props.state,
-    containerSize,
     container,
   });
 
@@ -102,7 +97,16 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
               {(content) => {
                 return (
                   <>
-                    <div style={{ "flex-grow": item.flexGrow }}>{content}</div>
+                    <div
+                      style={{
+                        "flex-grow": item.flexGrow,
+                        "flex-shrink": 1,
+                        "flex-basis": "0px",
+                      }}
+                      data-solid-panel
+                    >
+                      {content}
+                    </div>
                     <Show when={!isLast()}>
                       <button
                         data-solid-panel-resize-handle

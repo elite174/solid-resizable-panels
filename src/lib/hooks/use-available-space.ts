@@ -1,4 +1,5 @@
 import { Accessor, createMemo, onCleanup, onMount } from "solid-js";
+
 import { SOLID_PANEL_HANDLE_ATTRIBUTE_NAME } from "../constants";
 import { Direction } from "../types";
 
@@ -8,27 +9,26 @@ interface Params {
 }
 
 export const useAvailableSpace = ({ container, direction }: Params) => {
-  let availableSpace = 0;
+  let containerSize = 0;
+  let cumulativeResizeHandleSize = 0;
 
-  const domSizeProperty = createMemo(() =>
-    direction() === "horizontal" ? ("Width" as const) : ("Height" as const)
+  const contentRectProperty = createMemo(() =>
+    direction() === "horizontal" ? ("width" as const) : ("height" as const)
   );
 
-  const computeAvailableSpace = (containerElement: HTMLElement) => {
+  const computeCumulativeResizeHandleSize = (containerElement: HTMLElement) => {
     let result = 0;
 
-    for (let i = 0; i < containerElement.children.length; i++) {
-      const child = containerElement.children.item(i);
+    const resizeHandles = containerElement.querySelectorAll(
+      `[${SOLID_PANEL_HANDLE_ATTRIBUTE_NAME}]`
+    );
 
-      if (child && !child.hasAttribute(SOLID_PANEL_HANDLE_ATTRIBUTE_NAME))
-        result += child[`client${domSizeProperty()}`];
+    for (let i = 0; i < resizeHandles.length; i++) {
+      // optimize this!!!
+      result += resizeHandles[i].getBoundingClientRect()[contentRectProperty()];
     }
 
     return result;
-  };
-
-  const updateAvailableSpace = (newSpace: number) => {
-    availableSpace = newSpace;
   };
 
   onMount(() => {
@@ -36,18 +36,24 @@ export const useAvailableSpace = ({ container, direction }: Params) => {
 
     if (!containerElement) return;
 
-    const resizeObserver = new ResizeObserver(([containerEntry]) =>
-      updateAvailableSpace(
-        computeAvailableSpace(containerEntry.target as HTMLElement)
-      )
+    const updateResizeHandleSize = (newSize: number) => {
+      cumulativeResizeHandleSize = newSize;
+    };
+
+    const resizeObserver = new ResizeObserver(
+      ([containerEntry]) =>
+        (containerSize = containerEntry.contentRect[contentRectProperty()])
     );
+
     const mutationObserver = new MutationObserver((mutationList) => {
       for (const mutation of mutationList) {
         if (
           mutation.type === "childList" &&
           mutation.target === containerElement
         ) {
-          updateAvailableSpace(computeAvailableSpace(containerElement));
+          updateResizeHandleSize(
+            computeCumulativeResizeHandleSize(containerElement)
+          );
           break;
         }
       }
@@ -61,11 +67,13 @@ export const useAvailableSpace = ({ container, direction }: Params) => {
 
     resizeObserver.observe(containerElement);
 
+    updateResizeHandleSize(computeCumulativeResizeHandleSize(containerElement));
+
     onCleanup(() => {
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     });
   });
 
-  return () => availableSpace;
+  return () => containerSize - cumulativeResizeHandleSize;
 };

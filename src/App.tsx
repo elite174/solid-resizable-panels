@@ -8,18 +8,23 @@ import styles from "./App.module.css";
 const App: Component = () => {
   const { setConfig, ...adapter } = createPanelStore({
     config: [
-      { id: "1", flexGrow: 100, collapsible: false },
-      { id: "2", flexGrow: 100 },
+      {
+        id: "1",
+        flexGrow: 100,
+        collapsible: false,
+        maxFlexGrow: 120,
+      },
+      { id: "2", flexGrow: 100, minFlexGrow: 50 },
     ],
   });
 
-  setTimeout(() => {
+  /* setTimeout(() => {
     setConfig([
       { id: "1", flexGrow: 1, collapsible: false },
       { id: "2", flexGrow: 1 },
       { id: "3", flexGrow: 1 },
     ]);
-  }, 5000);
+  }, 5000); */
 
   return (
     <div class={styles.App}>

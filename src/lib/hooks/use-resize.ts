@@ -10,12 +10,12 @@ import type { Direction } from "../types";
 import { roundTo4Digits } from "../utils/math";
 
 import { CorrectionAccessors, createMouseDelta } from "../utils/mouse-delta";
+import { useAvailableSpace } from "./use-available-space";
 
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
   state: Accessor<SolidPanelStateAdapter["state"]>;
   onSizeChange: SolidPanelStateAdapter["onLayoutChange"];
-  containerSize: Accessor<number>;
   container: Accessor<HTMLElement | undefined>;
 }
 
@@ -25,7 +25,6 @@ export const useResize = ({
   direction,
   onSizeChange,
   state,
-  containerSize,
   container,
 }: Params) => {
   const mouseDelta = createMouseDelta({
@@ -47,6 +46,8 @@ export const useResize = ({
     setBeforeItemId(id);
   };
 
+  const containerSize = useAvailableSpace({ container, direction });
+
   createEffect(() => {
     const itemId = beforeItemId();
 
@@ -55,6 +56,12 @@ export const useResize = ({
 
       const stateBeforeResize = untrack(() =>
         state().config.map((item) => ({ id: item.id, flexGrow: item.flexGrow }))
+      );
+
+      const totalFlexGrow = untrack(() =>
+        roundTo4Digits(
+          state().config.reduce((sum, item) => sum + item.flexGrow, 0)
+        )
       );
 
       const handleMouseUp = () => {
@@ -77,18 +84,20 @@ export const useResize = ({
 
         const computeDeltaFlexGrow = (deltaPX: number) =>
           untrack(() => {
-            const flexGrowSum = roundTo4Digits(
-              state().config.reduce((sum, item) => item.flexGrow + sum, 0)
-            );
+            //console.log(deltaPX, totalFlexGrow, containerSize());
 
+            console.log(deltaPX);
             return roundTo4Digits(
-              (deltaPX * flexGrowSum) / roundTo4Digits(containerSize())
+              // Assume here, that the sum is always the same.
+              // TODO: change this logic in state setter
+              (deltaPX * totalFlexGrow) / roundTo4Digits(containerSize())
             );
           });
 
         const deltaGrow = computeDeltaFlexGrow(deltaPX());
 
-        onSizeChange(deltaGrow, itemId, stateBeforeResize);
+        if (deltaGrow !== 0)
+          untrack(() => onSizeChange(deltaGrow, itemId, stateBeforeResize));
       });
 
       onCleanup(() => {
