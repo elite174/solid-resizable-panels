@@ -17,7 +17,9 @@ const generateNewState = (
     stateOnResizeStart.length
   );
   const deltaSizeAbs = Math.abs(deltaSize);
+
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
+  let spentLeftDeltaSize = 0;
 
   // Firstly try to change the left side
   for (let i = resizableItemIndex; i >= 0; i--) {
@@ -30,9 +32,12 @@ const generateNewState = (
       ),
     };
 
+    spentLeftDeltaSize += roundTo4Digits(
+      Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    );
+
     remainingDeltaSizeLeftAbs = roundTo4Digits(
-      remainingDeltaSizeLeftAbs -
-        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+      remainingDeltaSizeLeftAbs - spentLeftDeltaSize
     );
 
     result[i] = patchItem;
@@ -41,6 +46,7 @@ const generateNewState = (
   }
 
   let remainingDeltaSizeRightAbs = deltaSizeAbs;
+  let spentRightDeltaSize = 0;
 
   // Now try to change right side
   for (let i = resizableItemIndex + 1; i < layout.length; i++) {
@@ -54,9 +60,12 @@ const generateNewState = (
       ),
     };
 
+    spentRightDeltaSize += roundTo4Digits(
+      Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    );
+
     remainingDeltaSizeRightAbs = roundTo4Digits(
-      remainingDeltaSizeRightAbs -
-        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+      remainingDeltaSizeRightAbs - spentRightDeltaSize
     );
 
     result[i] = patchItem;
@@ -66,51 +75,61 @@ const generateNewState = (
 
   // here we need to correct left side
   // because we can't resize it more than right side
-  if (remainingDeltaSizeLeftAbs < remainingDeltaSizeRightAbs) {
-    remainingDeltaSizeLeftAbs = deltaSizeAbs - remainingDeltaSizeRightAbs;
+  if (spentLeftDeltaSize > spentRightDeltaSize) {
+    remainingDeltaSizeLeftAbs = spentRightDeltaSize;
 
     for (let i = resizableItemIndex; i >= 0; i--) {
-      const patchItem = {
-        flexGrow: clamp(
-          stateOnResizeStart[i].flexGrow +
-            remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
-          layout[i].minFlexGrow ?? 0,
-          layout[i].maxFlexGrow ?? Infinity
-        ),
-      };
+      // we could get further on the first try
+      // so if we don't have budget to resize
+      // we need to clean up further items
+      if (remainingDeltaSizeLeftAbs !== 0) {
+        const patchItem = {
+          flexGrow: clamp(
+            stateOnResizeStart[i].flexGrow +
+              remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+            layout[i].minFlexGrow ?? 0,
+            layout[i].maxFlexGrow ?? Infinity
+          ),
+        };
 
-      remainingDeltaSizeLeftAbs = roundTo4Digits(
-        remainingDeltaSizeLeftAbs -
-          Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
-      );
+        remainingDeltaSizeLeftAbs = roundTo4Digits(
+          remainingDeltaSizeLeftAbs -
+            Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+        );
 
-      result[i] = patchItem;
-
-      if (remainingDeltaSizeLeftAbs === 0) break;
+        result[i] = patchItem;
+      } else {
+        result[i] = undefined;
+      }
     }
     // but here we need to correct right side
-  } else if (remainingDeltaSizeLeftAbs > remainingDeltaSizeRightAbs) {
-    remainingDeltaSizeRightAbs = deltaSizeAbs - remainingDeltaSizeLeftAbs;
+  } else if (spentLeftDeltaSize < spentRightDeltaSize) {
+    remainingDeltaSizeRightAbs = spentLeftDeltaSize;
 
     for (let i = resizableItemIndex + 1; i < layout.length; i++) {
-      const patchItem = {
-        flexGrow: clamp(
-          // Minus here is because we're changing right side
-          stateOnResizeStart[i].flexGrow -
-            remainingDeltaSizeRightAbs * Math.sign(deltaSize),
-          layout[i].minFlexGrow ?? 0,
-          layout[i].maxFlexGrow ?? Infinity
-        ),
-      };
+      // we could get further on the first try
+      // so if we don't have budget to resize
+      // we need to clean up further items
+      if (remainingDeltaSizeRightAbs !== 0) {
+        const patchItem = {
+          flexGrow: clamp(
+            // Minus here is because we're changing right side
+            stateOnResizeStart[i].flexGrow -
+              remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+            layout[i].minFlexGrow ?? 0,
+            layout[i].maxFlexGrow ?? Infinity
+          ),
+        };
 
-      remainingDeltaSizeRightAbs = roundTo4Digits(
-        remainingDeltaSizeRightAbs -
-          Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
-      );
+        remainingDeltaSizeRightAbs = roundTo4Digits(
+          remainingDeltaSizeRightAbs -
+            Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+        );
 
-      result[i] = patchItem;
-
-      if (remainingDeltaSizeRightAbs === 0) break;
+        result[i] = patchItem;
+      } else {
+        result[i] = undefined;
+      }
     }
   }
 
