@@ -82,7 +82,7 @@ const generateNewState = (
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
-      if (remainingDeltaSizeLeftAbs !== 0) {
+      if (remainingDeltaSizeLeftAbs > 0) {
         const patchItem = {
           flexGrow: clamp(
             stateOnResizeStart[i].flexGrow +
@@ -110,7 +110,7 @@ const generateNewState = (
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
-      if (remainingDeltaSizeRightAbs !== 0) {
+      if (remainingDeltaSizeRightAbs > 0) {
         const patchItem = {
           flexGrow: clamp(
             // Minus here is because we're changing right side
@@ -145,7 +145,7 @@ export const createPanelStore = ({ config }: Params) => {
   const onLayoutChange = (
     deltaSize: number,
     panelId: string,
-    stateOnResizeStart: { id: string; flexGrow: number }[]
+    stateOnResizeStart: { flexGrow: number }[]
   ) => {
     const currentItemIndex = state.config.findIndex(
       (item) => item.id === panelId

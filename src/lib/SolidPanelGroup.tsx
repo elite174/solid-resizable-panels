@@ -101,7 +101,6 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                       style={{
                         "flex-grow": item.flexGrow,
                         "flex-shrink": 1,
-                        "flex-basis": "0px",
                       }}
                       data-solid-panel
                     >
