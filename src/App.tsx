@@ -13,7 +13,7 @@ const App: Component = () => {
         flexGrow: 100,
       },
       { id: "2", flexGrow: 100, minFlexGrow: 50 },
-      { id: "3", flexGrow: 100, minFlexGrow: 50 },
+      { id: "3", flexGrow: 100, minFlexGrow: 100, maxFlexGrow: 100 },
       { id: "4", flexGrow: 100, minFlexGrow: 50, maxFlexGrow: 110 },
     ],
   });

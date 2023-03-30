@@ -16,13 +16,14 @@ const generateNewState = (
   const result: ({ flexGrow: number; collapsed?: boolean } | undefined)[] =
     new Array(stateOnResizeStart.length);
   const deltaSizeAbs = Math.abs(deltaSize);
-  const totalFlexGrow = stateOnResizeStart.reduce(
-    (sum, item) => item.flexGrow + sum,
-    0
-  );
 
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
   let spentLeftDeltaSize = 0;
+
+  // Below we try to resize all the items from the left side
+  // and from the right side.
+  // We cannot skip items or break the loop if we spent all resize budget
+  // because of visual bugs (fast resize)
 
   // Firstly try to change the left side
   for (let i = resizableItemIndex; i >= 0; i--) {
@@ -44,8 +45,6 @@ const generateNewState = (
     remainingDeltaSizeLeftAbs = remainingDeltaSizeLeftAbs - deltaSpent;
 
     result[i] = patchItem;
-
-    if (isZero(remainingDeltaSizeLeftAbs)) break;
   }
 
   let remainingDeltaSizeRightAbs = deltaSizeAbs;
@@ -72,8 +71,6 @@ const generateNewState = (
     remainingDeltaSizeRightAbs = remainingDeltaSizeRightAbs - deltaSpent;
 
     result[i] = patchItem;
-
-    if (isZero(remainingDeltaSizeRightAbs)) break;
   }
 
   // here we need to correct left side
@@ -154,7 +151,7 @@ export const createPanelStore = ({ config }: Params) => {
     // TODO handle error somehow
     if (currentItemIndex === -1) return;
 
-    const patch = generateNewState(
+    const newState = generateNewState(
       state.config,
       stateOnResizeStart,
       currentItemIndex,
@@ -163,8 +160,8 @@ export const createPanelStore = ({ config }: Params) => {
 
     setState(
       produce((s) => {
-        for (let i = 0; i < patch.length; i++) {
-          const patchItem = patch[i];
+        for (let i = 0; i < newState.length; i++) {
+          const patchItem = newState[i];
 
           if (patchItem) s.config[i].flexGrow = patchItem.flexGrow;
         }

@@ -91,16 +91,18 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                 element.getAttribute(SOLID_PANEL_ATTRIBUTE_NAME) === item.id
             );
 
-          const isLast = () => index() === props.state.config.length - 1;
-
           return (
             <Show when={child()} keyed>
               {(content) => {
+                const flexGrow = () => (item.collapsed ? 0 : item.flexGrow);
+
+                const isLast = () => index() === props.state.config.length - 1;
+
                 return (
                   <>
                     <div
                       style={{
-                        "flex-grow": item.flexGrow,
+                        "flex-grow": flexGrow(),
                         "flex-shrink": 1,
                         "flex-basis": 0,
                         overflow: "hidden",
@@ -112,7 +114,6 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                     <Show when={!isLast()}>
                       <button
                         data-solid-panel-resize-handle
-                        //style={{ width: "300px" }}
                         class="resize-handle"
                         onMouseDown={createMouseDownHandler(item.id)}
                       ></button>
