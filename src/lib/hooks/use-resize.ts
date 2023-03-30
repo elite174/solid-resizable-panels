@@ -17,6 +17,7 @@ interface Params extends CorrectionAccessors {
   state: Accessor<SolidPanelStateAdapter["state"]>;
   onSizeChange: SolidPanelStateAdapter["onLayoutChange"];
   container: Accessor<HTMLElement | undefined>;
+  reverse: Accessor<boolean>;
 }
 
 export const useResize = ({
@@ -26,6 +27,7 @@ export const useResize = ({
   onSizeChange,
   state,
   container,
+  reverse,
 }: Params) => {
   const mouseDelta = createMouseDelta({
     zoom,
@@ -78,9 +80,12 @@ export const useResize = ({
 
         if (!containerElement) return;
 
+        const reverseSign = () => (reverse() ? -1 : 1);
+
         const isHorizontal = () => direction() === "horizontal";
         const deltaPX = () =>
-          isHorizontal() ? mouseDelta.deltaX() : mouseDelta.deltaY();
+          (isHorizontal() ? mouseDelta.deltaX() : mouseDelta.deltaY()) *
+          reverseSign();
 
         const computeDeltaFlexGrow = (deltaPX: number) =>
           untrack(() => {

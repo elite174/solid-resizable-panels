@@ -31,7 +31,13 @@ interface Props {
 
 export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
   const props = mergeProps(
-    { tag: "div", zoom: 1, scale: 1, direction: "horizontal" as Direction },
+    {
+      tag: "div",
+      zoom: 1,
+      scale: 1,
+      direction: "horizontal" as Direction,
+      reverse: false,
+    },
     initialProps
   );
 
@@ -69,6 +75,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
     onSizeChange: props.onLayoutChange,
     state: () => props.state,
     container,
+    reverse: () => props.reverse,
   });
 
   return (

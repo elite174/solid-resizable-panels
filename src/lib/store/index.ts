@@ -1,7 +1,7 @@
 import { createStore, produce, reconcile } from "solid-js/store";
 
 import { ConfigItem } from "../types";
-import { clamp, EPSILON, isZero } from "../utils/math";
+import { clamp, EPSILON } from "../utils/math";
 
 interface Params {
   config: ConfigItem[];
