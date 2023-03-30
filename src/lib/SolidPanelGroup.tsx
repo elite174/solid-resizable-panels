@@ -73,6 +73,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
 
   return (
     <Dynamic
+      style={{ height: "100vh" }}
       component={props.tag}
       ref={setContainer}
       classList={{
@@ -101,6 +102,8 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                       style={{
                         "flex-grow": item.flexGrow,
                         "flex-shrink": 1,
+                        "flex-basis": 0,
+                        overflow: "hidden",
                       }}
                       data-solid-panel
                     >

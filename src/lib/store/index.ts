@@ -1,7 +1,7 @@
 import { createStore, produce, reconcile } from "solid-js/store";
 
 import { ConfigItem } from "../types";
-import { clamp, roundTo4Digits } from "../utils/math";
+import { clamp, EPSILON, isZero } from "../utils/math";
 
 interface Params {
   config: ConfigItem[];
@@ -13,10 +13,13 @@ const generateNewState = (
   resizableItemIndex: number,
   deltaSize: number
 ) => {
-  const result: ({ flexGrow: number } | undefined)[] = new Array(
-    stateOnResizeStart.length
-  );
+  const result: ({ flexGrow: number; collapsed?: boolean } | undefined)[] =
+    new Array(stateOnResizeStart.length);
   const deltaSizeAbs = Math.abs(deltaSize);
+  const totalFlexGrow = stateOnResizeStart.reduce(
+    (sum, item) => item.flexGrow + sum,
+    0
+  );
 
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
   let spentLeftDeltaSize = 0;
@@ -32,17 +35,17 @@ const generateNewState = (
       ),
     };
 
-    spentLeftDeltaSize += roundTo4Digits(
-      Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    const deltaSpent = Math.abs(
+      patchItem.flexGrow - stateOnResizeStart[i].flexGrow
     );
 
-    remainingDeltaSizeLeftAbs = roundTo4Digits(
-      remainingDeltaSizeLeftAbs - spentLeftDeltaSize
-    );
+    spentLeftDeltaSize += deltaSpent;
+
+    remainingDeltaSizeLeftAbs = remainingDeltaSizeLeftAbs - deltaSpent;
 
     result[i] = patchItem;
 
-    if (remainingDeltaSizeLeftAbs === 0) break;
+    if (isZero(remainingDeltaSizeLeftAbs)) break;
   }
 
   let remainingDeltaSizeRightAbs = deltaSizeAbs;
@@ -60,76 +63,73 @@ const generateNewState = (
       ),
     };
 
-    spentRightDeltaSize += roundTo4Digits(
-      Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
+    const deltaSpent = Math.abs(
+      patchItem.flexGrow - stateOnResizeStart[i].flexGrow
     );
 
-    remainingDeltaSizeRightAbs = roundTo4Digits(
-      remainingDeltaSizeRightAbs - spentRightDeltaSize
-    );
+    spentRightDeltaSize += deltaSpent;
+
+    remainingDeltaSizeRightAbs = remainingDeltaSizeRightAbs - deltaSpent;
 
     result[i] = patchItem;
 
-    if (remainingDeltaSizeRightAbs === 0) break;
+    if (isZero(remainingDeltaSizeRightAbs)) break;
   }
 
   // here we need to correct left side
   // because we can't resize it more than right side
-  if (spentLeftDeltaSize > spentRightDeltaSize) {
+  if (spentLeftDeltaSize - spentRightDeltaSize > EPSILON) {
     remainingDeltaSizeLeftAbs = spentRightDeltaSize;
 
     for (let i = resizableItemIndex; i >= 0; i--) {
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
-      if (remainingDeltaSizeLeftAbs > 0) {
-        const patchItem = {
-          flexGrow: clamp(
-            stateOnResizeStart[i].flexGrow +
-              remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
-            layout[i].minFlexGrow ?? 0,
-            layout[i].maxFlexGrow ?? Infinity
-          ),
-        };
+      // We need to revisit all the items
+      // to get rid of stale visual artifacts (for example, when a user resizes panel really fast)
 
-        remainingDeltaSizeLeftAbs = roundTo4Digits(
-          remainingDeltaSizeLeftAbs -
-            Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
-        );
+      const patchItem = {
+        flexGrow: clamp(
+          stateOnResizeStart[i].flexGrow +
+            remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+          layout[i].minFlexGrow ?? 0,
+          layout[i].maxFlexGrow ?? Infinity
+        ),
+      };
 
-        result[i] = patchItem;
-      } else {
-        result[i] = undefined;
-      }
+      remainingDeltaSizeLeftAbs =
+        remainingDeltaSizeLeftAbs -
+        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow);
+
+      result[i] = patchItem;
     }
+
     // but here we need to correct right side
-  } else if (spentLeftDeltaSize < spentRightDeltaSize) {
+  } else if (Math.abs(spentLeftDeltaSize - spentRightDeltaSize) > EPSILON) {
     remainingDeltaSizeRightAbs = spentLeftDeltaSize;
 
     for (let i = resizableItemIndex + 1; i < layout.length; i++) {
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
-      if (remainingDeltaSizeRightAbs > 0) {
-        const patchItem = {
-          flexGrow: clamp(
-            // Minus here is because we're changing right side
-            stateOnResizeStart[i].flexGrow -
-              remainingDeltaSizeRightAbs * Math.sign(deltaSize),
-            layout[i].minFlexGrow ?? 0,
-            layout[i].maxFlexGrow ?? Infinity
-          ),
-        };
+      // We need to revisit all the items
+      // to get rid of stale visual artifacts (for example, when a user resizes panel really fast)
 
-        remainingDeltaSizeRightAbs = roundTo4Digits(
-          remainingDeltaSizeRightAbs -
-            Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow)
-        );
+      const patchItem = {
+        flexGrow: clamp(
+          // Minus here is because we're changing right side
+          stateOnResizeStart[i].flexGrow -
+            remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+          layout[i].minFlexGrow ?? 0,
+          layout[i].maxFlexGrow ?? Infinity
+        ),
+      };
 
-        result[i] = patchItem;
-      } else {
-        result[i] = undefined;
-      }
+      remainingDeltaSizeRightAbs =
+        remainingDeltaSizeRightAbs -
+        Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow);
+
+      result[i] = patchItem;
     }
   }
 
