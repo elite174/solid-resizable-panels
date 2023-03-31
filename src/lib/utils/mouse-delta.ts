@@ -43,7 +43,7 @@ export const createMouseDelta = ({ zoom, scale }: CorrectionAccessors) => {
         setDeltaY(0);
       });
     },
-    computeDelta: (e: MouseEvent) => {
+    updateMouseDelta: (e: MouseEvent) => {
       batch(() => {
         setDeltaX(correctValue(e.clientX, zoom(), scale()) - initialClientX());
         setDeltaY(correctValue(e.clientY, zoom(), scale()) - initialClientY());

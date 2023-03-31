@@ -2,11 +2,12 @@ import {
   Accessor,
   createEffect,
   createSignal,
+  on,
   onCleanup,
   untrack,
 } from "solid-js";
 import { SolidPanelStateAdapter } from "../store";
-import type { Direction } from "../types";
+import type { Direction, ItemResizeState } from "../types";
 import { roundTo4Digits } from "../utils/math";
 
 import { CorrectionAccessors, createMouseDelta } from "../utils/mouse-delta";
@@ -34,80 +35,67 @@ export const useResize = ({
     scale,
   });
 
-  const [beforeItemId, setBeforeItemId] = createSignal<string | undefined>(
-    undefined
-  );
-
-  let resizeElement: HTMLElement | null = null;
+  const [resizablePanelId, setResizablePanelId] = createSignal<
+    string | undefined
+  >(undefined);
 
   const createMouseDownHandler = (id: string) => (e: MouseEvent) => {
-    resizeElement = e.currentTarget as HTMLElement | null;
-
     mouseDelta.init(e);
 
-    setBeforeItemId(id);
+    setResizablePanelId(id);
   };
 
   const containerSize = useAvailableSpace({ container, direction });
 
-  createEffect(() => {
-    const itemId = beforeItemId();
+  createEffect(
+    on(resizablePanelId, (panelId) => {
+      if (!panelId) return;
 
-    if (itemId) {
-      const handleMouseMove = (e: MouseEvent) => mouseDelta.computeDelta(e);
-
-      const stateBeforeResize = untrack(() =>
-        state().config.map((item) => ({ id: item.id, flexGrow: item.flexGrow }))
+      const stateBeforeResize: ItemResizeState[] = state().config.map(
+        (item) => ({ flexGrow: item.flexGrow })
       );
 
-      const totalFlexGrow = untrack(() =>
-        roundTo4Digits(
-          state().config.reduce((sum, item) => sum + item.flexGrow, 0)
-        )
+      const totalFlexGrow = roundTo4Digits(
+        state().config.reduce((sum, item) => sum + item.flexGrow, 0)
       );
 
-      const handleMouseUp = () => {
-        resizeElement = null;
+      const handleMouseMove = (e: MouseEvent) => mouseDelta.updateMouseDelta(e);
 
-        setBeforeItemId(undefined);
-      };
+      const handleMouseUp = () => setResizablePanelId(undefined);
 
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp, { once: true });
 
-      createEffect(() => {
-        const containerElement = container();
+      // There things are not reactive during resize
+      const isHorizontal = direction() === "horizontal";
+      const reverseSign = reverse() ? -1 : 1;
 
-        if (!containerElement) return;
+      const deltaPX = () =>
+        (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) *
+        reverseSign;
 
-        const reverseSign = () => (reverse() ? -1 : 1);
+      createEffect(
+        on(deltaPX, (currentDeltaPX) => {
+          const containerElement = container();
 
-        const isHorizontal = () => direction() === "horizontal";
-        const deltaPX = () =>
-          (isHorizontal() ? mouseDelta.deltaX() : mouseDelta.deltaY()) *
-          reverseSign();
+          if (!containerElement) return;
 
-        const computeDeltaFlexGrow = (deltaPX: number) =>
-          untrack(() => {
-            return roundTo4Digits(
-              // Assume here, that the sum is always the same.
-              // TODO: change this logic in state setter
-              (deltaPX * totalFlexGrow) / roundTo4Digits(containerSize())
-            );
-          });
+          const deltaFlexGrow = roundTo4Digits(
+            // TODO: change this logic in state setter
+            (currentDeltaPX * totalFlexGrow) / roundTo4Digits(containerSize())
+          );
 
-        const deltaGrow = computeDeltaFlexGrow(deltaPX());
-
-        if (deltaGrow !== 0)
-          untrack(() => onSizeChange(deltaGrow, itemId, stateBeforeResize));
-      });
+          if (deltaFlexGrow !== 0)
+            onSizeChange(deltaFlexGrow, panelId, stateBeforeResize);
+        })
+      );
 
       onCleanup(() => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       });
-    }
-  });
+    })
+  );
 
   return {
     createMouseDownHandler,
