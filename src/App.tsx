@@ -14,9 +14,15 @@ const App: Component = () => {
         minFlexGrow: 20,
         collapsible: true,
       },
-      { id: "2", flexGrow: 100, minFlexGrow: 50 },
-      { id: "3", flexGrow: 100, collapsible: true },
-      { id: "4", flexGrow: 100, minFlexGrow: 50, maxFlexGrow: 110 },
+      { id: "2", flexGrow: 100, minFlexGrow: 50, collapsible: true },
+      { id: "3", flexGrow: 100 },
+      {
+        id: "4",
+        flexGrow: 100,
+        minFlexGrow: 50,
+        maxFlexGrow: 110,
+        collapsible: true,
+      },
     ],
   });
 

@@ -1,6 +1,6 @@
 import { createStore, produce, reconcile } from "solid-js/store";
 
-import { ConfigItem, ItemStateOnResizeStart } from "../types";
+import type { ConfigItem, ItemStateOnResizeStart } from "../types";
 import { clamp, EPSILON, isZero } from "../utils/math";
 
 interface Params {
@@ -16,12 +16,14 @@ const generateNewState = (
   resizableItemIndex: number,
   deltaSize: number
 ) => {
-  const result: ({ flexGrow: number; collapsed?: boolean } | undefined)[] =
-    new Array(stateOnResizeStart.length);
+  const result: (ItemStateOnResizeStart | undefined)[] = new Array(
+    stateOnResizeStart.length
+  );
   const deltaSizeAbs = Math.abs(deltaSize);
 
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
-  let spentLeftDeltaSize = 0;
+  let revealedDeltaSizeLeft = 0;
+  let spentDeltaSizeLeft = 0;
 
   // Below we try to resize all the items from the left side
   // and from the right side.
@@ -30,17 +32,24 @@ const generateNewState = (
 
   // Firstly try to change the left side
   for (let i = resizableItemIndex; i >= 0; i--) {
-    const newFlexGrow = clamp(
-      stateOnResizeStart[i].flexGrow +
-        remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
-      layout[i].minFlexGrow ?? 0,
-      layout[i].maxFlexGrow ?? Infinity
-    );
+    // We can't shrink this item even more
+    if (stateOnResizeStart[i].flexGrow === 0 && Math.sign(deltaSize) < 0)
+      continue;
+
     const virtualFlexGrow =
       stateOnResizeStart[i].flexGrow +
       remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
 
-    console.log(i, virtualFlexGrow);
+    const revealed =
+      layout[i].collapsible &&
+      isZero(stateOnResizeStart[i].flexGrow) &&
+      virtualFlexGrow > EPSILON;
+
+    const newFlexGrow = clamp(
+      virtualFlexGrow,
+      layout[i].minFlexGrow ?? 0,
+      layout[i].maxFlexGrow ?? Infinity
+    );
 
     const patchItem = {
       flexGrow: newFlexGrow,
@@ -51,22 +60,65 @@ const generateNewState = (
       stateOnResizeStart[i].flexGrow
     );
 
-    spentLeftDeltaSize += deltaSpent;
+    spentDeltaSizeLeft += deltaSpent;
+
+    if (revealed) revealedDeltaSizeLeft += layout[i].minFlexGrow ?? 0;
 
     remainingDeltaSizeLeftAbs = remainingDeltaSizeLeftAbs - deltaSpent;
 
     result[i] = patchItem;
   }
 
+  // Now if we have some budget
+  // we need to collapse items from the left side (if we're going to left)
+  // We need to collapse them one by one:
+  // If we don't have enough budget to collapse
+  // stop iterate on items
+  if (Math.sign(deltaSize) < 0 && remainingDeltaSizeLeftAbs > EPSILON) {
+    for (let i = resizableItemIndex; i >= 0; i--) {
+      if (stateOnResizeStart[i].flexGrow === 0) continue;
+
+      const currentItem = layout[i];
+
+      // If we can collapse an item
+      // Do this
+      if (currentItem.collapsible) {
+        if (currentItem.minFlexGrow < remainingDeltaSizeLeftAbs) {
+          if (result[i]) {
+            // hate TS for this
+            result[i]!.flexGrow = 0;
+          } else {
+            result[i] = { flexGrow: 0 };
+          }
+
+          remainingDeltaSizeLeftAbs -= currentItem.minFlexGrow;
+          // Don't need to iterate further because we don't have enough budget to collapse nearest item
+        } else break;
+      }
+    }
+  }
+
   let remainingDeltaSizeRightAbs = deltaSizeAbs;
-  let spentRightDeltaSize = 0;
+  let revealedDeltaSizeRight = 0;
+  let spentDeltaSizeRight = 0;
 
   // Now try to change right side
   for (let i = resizableItemIndex + 1; i < layout.length; i++) {
-    const newFlexGrow = clamp(
-      // Minus here is because we're changing right side
+    // We can't shrink this item even more
+    if (stateOnResizeStart[i].flexGrow === 0 && Math.sign(deltaSize) > 0)
+      continue;
+
+    const virtualFlexGrow = // Minus here is because we're changing right side
       stateOnResizeStart[i].flexGrow -
-        remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+      remainingDeltaSizeRightAbs * Math.sign(deltaSize);
+
+    const revealed =
+      layout[i].collapsible &&
+      isZero(stateOnResizeStart[i].flexGrow) &&
+      virtualFlexGrow > EPSILON;
+
+    const newFlexGrow = clamp(
+      virtualFlexGrow,
       layout[i].minFlexGrow ?? 0,
       layout[i].maxFlexGrow ?? Infinity
     );
@@ -80,27 +132,76 @@ const generateNewState = (
       stateOnResizeStart[i].flexGrow
     );
 
-    spentRightDeltaSize += deltaSpent;
+    spentDeltaSizeRight += deltaSpent;
+
+    if (revealed) revealedDeltaSizeRight += layout[i].minFlexGrow ?? 0;
 
     remainingDeltaSizeRightAbs = remainingDeltaSizeRightAbs - deltaSpent;
 
     result[i] = patchItem;
   }
 
+  // Now if we have some budget
+  // we need to collapse items from the right side
+  // We need to collapse them one by one:
+  // If we don't have enough budget to collapse
+  // stop iterate on items
+  if (Math.sign(deltaSize) > 0 && remainingDeltaSizeRightAbs > EPSILON) {
+    for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+      // We can't shrink this item even more
+      if (stateOnResizeStart[i].flexGrow === 0) continue;
+
+      const currentItem = layout[i];
+
+      // If we can collapse an item
+      // Do this
+      if (currentItem.collapsible) {
+        if (currentItem.minFlexGrow < remainingDeltaSizeRightAbs) {
+          if (result[i]) {
+            // hate TS for this
+            result[i]!.flexGrow = 0;
+          } else {
+            result[i] = { flexGrow: 0 };
+          }
+
+          remainingDeltaSizeRightAbs -= currentItem.minFlexGrow;
+          // Don't need to iterate further because we don't have enough budget to collapse nearest item
+        } else break;
+      }
+    }
+  }
+
+  spentDeltaSizeLeft = clamp(
+    spentDeltaSizeLeft - revealedDeltaSizeLeft,
+    0,
+    Infinity
+  );
+  spentDeltaSizeRight = clamp(
+    spentDeltaSizeRight - revealedDeltaSizeRight,
+    0,
+    Infinity
+  );
+
   // here we need to correct left side
   // because we can't resize it more than right side
-  if (spentLeftDeltaSize - spentRightDeltaSize > EPSILON) {
-    remainingDeltaSizeLeftAbs = spentRightDeltaSize;
+  if (spentDeltaSizeLeft - spentDeltaSizeRight > EPSILON) {
+    remainingDeltaSizeLeftAbs = spentDeltaSizeRight;
 
     for (let i = resizableItemIndex; i >= 0; i--) {
+      // We can't shrink this item even more
+      if (stateOnResizeStart[i].flexGrow === 0 && Math.sign(deltaSize) < 0)
+        continue;
+
+      const virtualFlexGrow =
+        stateOnResizeStart[i].flexGrow +
+        remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
       // We need to revisit all the items
       // to get rid of stale visual artifacts (for example, when a user resizes panel really fast)
       const newFlexGrow = clamp(
-        stateOnResizeStart[i].flexGrow +
-          remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+        virtualFlexGrow,
         layout[i].minFlexGrow ?? 0,
         layout[i].maxFlexGrow ?? Infinity
       );
@@ -116,11 +217,43 @@ const generateNewState = (
       result[i] = patchItem;
     }
 
+    if (Math.sign(deltaSize) < 0 && remainingDeltaSizeLeftAbs > EPSILON) {
+      for (let i = resizableItemIndex; i >= 0; i--) {
+        // We can't shrink this item even more
+        if (stateOnResizeStart[i].flexGrow === 0) continue;
+
+        const currentItem = layout[i];
+
+        // If we can collapse an item
+        // Do this
+        if (currentItem.collapsible) {
+          if (currentItem.minFlexGrow < remainingDeltaSizeLeftAbs) {
+            if (result[i]) {
+              // hate TS for this
+              result[i]!.flexGrow = 0;
+            } else {
+              result[i] = { flexGrow: 0 };
+            }
+
+            remainingDeltaSizeLeftAbs -= currentItem.minFlexGrow;
+            // Don't need to iterate further because we don't have enough budget to collapse nearest item
+          } else break;
+        }
+      }
+    }
+
     // but here we need to correct right side
-  } else if (Math.abs(spentLeftDeltaSize - spentRightDeltaSize) > EPSILON) {
-    remainingDeltaSizeRightAbs = spentLeftDeltaSize;
+  } else if (spentDeltaSizeRight - spentDeltaSizeLeft > EPSILON) {
+    remainingDeltaSizeRightAbs = spentDeltaSizeLeft;
 
     for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+      // We can't shrink this item even more
+      if (stateOnResizeStart[i].flexGrow === 0 && Math.sign(deltaSize) > 0)
+        continue;
+
+      const virtualFlexGrow =
+        stateOnResizeStart[i].flexGrow -
+        remainingDeltaSizeRightAbs * Math.sign(deltaSize);
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
@@ -129,8 +262,7 @@ const generateNewState = (
 
       const newFlexGrow = clamp(
         // Minus here is because we're changing right side
-        stateOnResizeStart[i].flexGrow -
-          remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+        virtualFlexGrow,
         layout[i].minFlexGrow ?? 0,
         layout[i].maxFlexGrow ?? Infinity
       );
@@ -144,6 +276,31 @@ const generateNewState = (
         Math.abs(patchItem.flexGrow - stateOnResizeStart[i].flexGrow);
 
       result[i] = patchItem;
+    }
+
+    if (Math.sign(deltaSize) > 0 && remainingDeltaSizeRightAbs > EPSILON) {
+      for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+        // We can't shrink this item even more
+        if (stateOnResizeStart[i].flexGrow === 0) continue;
+
+        const currentItem = layout[i];
+
+        // If we can collapse an item
+        // Do this
+        if (currentItem.collapsible) {
+          if (currentItem.minFlexGrow < remainingDeltaSizeRightAbs) {
+            if (result[i]) {
+              // hate TS for this
+              result[i]!.flexGrow = 0;
+            } else {
+              result[i] = { flexGrow: 0 };
+            }
+
+            remainingDeltaSizeRightAbs -= currentItem.minFlexGrow;
+            // Don't need to iterate further because we don't have enough budget to collapse nearest item
+          } else break;
+        }
+      }
     }
   }
 

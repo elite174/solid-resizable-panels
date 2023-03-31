@@ -5,11 +5,10 @@ export type ItemStateOnResizeStart = {
 export type ConfigItem = {
   id: string;
   flexGrow: number;
-  minFlexGrow?: number;
   maxFlexGrow?: number;
 } & (
-  | { collapsible?: false; onCollapse?: never }
-  | { collapsible?: true; onCollapse?: (id: string) => void }
+  | { collapsible?: false; minFlexGrow?: number }
+  | { collapsible?: true; minFlexGrow: number }
 );
 
 export type Direction = "vertical" | "horizontal";
