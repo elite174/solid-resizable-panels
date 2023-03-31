@@ -11,9 +11,11 @@ const App: Component = () => {
       {
         id: "1",
         flexGrow: 100,
+        minFlexGrow: 20,
+        collapsible: true,
       },
       { id: "2", flexGrow: 100, minFlexGrow: 50 },
-      { id: "3", flexGrow: 100, minFlexGrow: 100, maxFlexGrow: 100 },
+      { id: "3", flexGrow: 100, collapsible: true },
       { id: "4", flexGrow: 100, minFlexGrow: 50, maxFlexGrow: 110 },
     ],
   });

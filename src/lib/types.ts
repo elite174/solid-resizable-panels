@@ -1,14 +1,15 @@
-export type ItemResizeState = {
+export type ItemStateOnResizeStart = {
   flexGrow: number;
 };
 
-export type ConfigItem = ItemResizeState & {
+export type ConfigItem = {
   id: string;
+  flexGrow: number;
   minFlexGrow?: number;
   maxFlexGrow?: number;
 } & (
-    | { collapsible?: false; collapsed?: never }
-    | { collapsible?: true; collapsed?: boolean }
-  );
+  | { collapsible?: false; onCollapse?: never }
+  | { collapsible?: true; onCollapse?: (id: string) => void }
+);
 
 export type Direction = "vertical" | "horizontal";

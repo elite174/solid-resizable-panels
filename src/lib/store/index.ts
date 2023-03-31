@@ -1,15 +1,18 @@
 import { createStore, produce, reconcile } from "solid-js/store";
 
-import { ConfigItem } from "../types";
-import { clamp, EPSILON } from "../utils/math";
+import { ConfigItem, ItemStateOnResizeStart } from "../types";
+import { clamp, EPSILON, isZero } from "../utils/math";
 
 interface Params {
   config: ConfigItem[];
 }
 
+const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
+  Math.abs(newFlexGrow - initialFlexGrow);
+
 const generateNewState = (
   layout: ConfigItem[],
-  stateOnResizeStart: { flexGrow: number }[],
+  stateOnResizeStart: ItemStateOnResizeStart[],
   resizableItemIndex: number,
   deltaSize: number
 ) => {
@@ -27,17 +30,25 @@ const generateNewState = (
 
   // Firstly try to change the left side
   for (let i = resizableItemIndex; i >= 0; i--) {
+    const newFlexGrow = clamp(
+      stateOnResizeStart[i].flexGrow +
+        remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+      layout[i].minFlexGrow ?? 0,
+      layout[i].maxFlexGrow ?? Infinity
+    );
+    const virtualFlexGrow =
+      stateOnResizeStart[i].flexGrow +
+      remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
+
+    console.log(i, virtualFlexGrow);
+
     const patchItem = {
-      flexGrow: clamp(
-        stateOnResizeStart[i].flexGrow +
-          remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
-        layout[i].minFlexGrow ?? 0,
-        layout[i].maxFlexGrow ?? Infinity
-      ),
+      flexGrow: newFlexGrow,
     };
 
-    const deltaSpent = Math.abs(
-      patchItem.flexGrow - stateOnResizeStart[i].flexGrow
+    const deltaSpent = computeSpentFlexGrow(
+      patchItem.flexGrow,
+      stateOnResizeStart[i].flexGrow
     );
 
     spentLeftDeltaSize += deltaSpent;
@@ -52,18 +63,21 @@ const generateNewState = (
 
   // Now try to change right side
   for (let i = resizableItemIndex + 1; i < layout.length; i++) {
+    const newFlexGrow = clamp(
+      // Minus here is because we're changing right side
+      stateOnResizeStart[i].flexGrow -
+        remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+      layout[i].minFlexGrow ?? 0,
+      layout[i].maxFlexGrow ?? Infinity
+    );
+
     const patchItem = {
-      flexGrow: clamp(
-        // Minus here is because we're changing right side
-        stateOnResizeStart[i].flexGrow -
-          remainingDeltaSizeRightAbs * Math.sign(deltaSize),
-        layout[i].minFlexGrow ?? 0,
-        layout[i].maxFlexGrow ?? Infinity
-      ),
+      flexGrow: newFlexGrow,
     };
 
-    const deltaSpent = Math.abs(
-      patchItem.flexGrow - stateOnResizeStart[i].flexGrow
+    const deltaSpent = computeSpentFlexGrow(
+      patchItem.flexGrow,
+      stateOnResizeStart[i].flexGrow
     );
 
     spentRightDeltaSize += deltaSpent;
@@ -84,14 +98,15 @@ const generateNewState = (
       // we need to clean up further items
       // We need to revisit all the items
       // to get rid of stale visual artifacts (for example, when a user resizes panel really fast)
+      const newFlexGrow = clamp(
+        stateOnResizeStart[i].flexGrow +
+          remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
+        layout[i].minFlexGrow ?? 0,
+        layout[i].maxFlexGrow ?? Infinity
+      );
 
       const patchItem = {
-        flexGrow: clamp(
-          stateOnResizeStart[i].flexGrow +
-            remainingDeltaSizeLeftAbs * Math.sign(deltaSize),
-          layout[i].minFlexGrow ?? 0,
-          layout[i].maxFlexGrow ?? Infinity
-        ),
+        flexGrow: newFlexGrow,
       };
 
       remainingDeltaSizeLeftAbs =
@@ -112,14 +127,16 @@ const generateNewState = (
       // We need to revisit all the items
       // to get rid of stale visual artifacts (for example, when a user resizes panel really fast)
 
+      const newFlexGrow = clamp(
+        // Minus here is because we're changing right side
+        stateOnResizeStart[i].flexGrow -
+          remainingDeltaSizeRightAbs * Math.sign(deltaSize),
+        layout[i].minFlexGrow ?? 0,
+        layout[i].maxFlexGrow ?? Infinity
+      );
+
       const patchItem = {
-        flexGrow: clamp(
-          // Minus here is because we're changing right side
-          stateOnResizeStart[i].flexGrow -
-            remainingDeltaSizeRightAbs * Math.sign(deltaSize),
-          layout[i].minFlexGrow ?? 0,
-          layout[i].maxFlexGrow ?? Infinity
-        ),
+        flexGrow: newFlexGrow,
       };
 
       remainingDeltaSizeRightAbs =
@@ -142,19 +159,19 @@ export const createPanelStore = ({ config }: Params) => {
   const onLayoutChange = (
     deltaSize: number,
     panelId: string,
-    stateOnResizeStart: { flexGrow: number }[]
+    stateOnResizeStart: ItemStateOnResizeStart[]
   ) => {
-    const currentItemIndex = state.config.findIndex(
+    const resizableItemIndex = state.config.findIndex(
       (item) => item.id === panelId
     );
 
     // TODO handle error somehow
-    if (currentItemIndex === -1) return;
+    if (resizableItemIndex === -1) return;
 
     const newState = generateNewState(
       state.config,
       stateOnResizeStart,
-      currentItemIndex,
+      resizableItemIndex,
       deltaSize
     );
 

@@ -101,15 +101,13 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
           return (
             <Show when={child()} keyed>
               {(content) => {
-                const flexGrow = () => (item.collapsed ? 0 : item.flexGrow);
-
                 const isLast = () => index() === props.state.config.length - 1;
 
                 return (
                   <>
                     <div
                       style={{
-                        "flex-grow": flexGrow(),
+                        "flex-grow": item.flexGrow,
                         "flex-shrink": 1,
                         "flex-basis": 0,
                         overflow: "hidden",
