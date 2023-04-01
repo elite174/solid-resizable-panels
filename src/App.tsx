@@ -1,12 +1,12 @@
 import type { Component } from "solid-js";
 
-import { SolidPanelGroup, createPanelStore } from "./lib";
+import { Panel, PanelGroup, ResizeHandle } from "./lib";
 import "./lib/styles.css";
 
 import styles from "./App.module.css";
 
 const App: Component = () => {
-  const { setConfig, ...adapter } = createPanelStore({
+  /*  const { setConfig, ...adapter } = createPanelStore({
     layout: [
       {
         id: "1",
@@ -22,7 +22,7 @@ const App: Component = () => {
         collapsible: true,
       },
     ],
-  });
+  }); */
 
   /* setTimeout(() => {
     setConfig([
@@ -33,12 +33,18 @@ const App: Component = () => {
   }, 5000); */
 
   return (
-    <SolidPanelGroup {...adapter} class={styles.panelGroup}>
-      <div data-solid-panel-id="1">hi</div>
-      <div data-solid-panel-id="2">2</div>
-      <div data-solid-panel-id="3">3</div>
-      <div data-solid-panel-id="4">4</div>
-    </SolidPanelGroup>
+    <PanelGroup>
+      <Panel id="1">
+        <div>1</div>
+      </Panel>
+      <ResizeHandle />
+      <Panel id="2">
+        <div>2</div>
+      </Panel>
+      <Panel id="3">
+        <div>3</div>
+      </Panel>
+    </PanelGroup>
   );
 };
 
