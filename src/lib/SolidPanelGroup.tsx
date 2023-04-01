@@ -98,7 +98,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
             );
 
           return (
-            <Show when={child()} keyed>
+            <Show when={child()}>
               {(content) => {
                 const isLast = () => index() === props.state.layout.length - 1;
 
@@ -120,7 +120,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
                 return (
                   <>
                     <div style={itemStyle()} data-solid-panel>
-                      {content}
+                      {content()}
                     </div>
                     <Show when={isResizeHandleVisible()}>
                       <button
