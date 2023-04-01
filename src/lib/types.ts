@@ -1,8 +1,4 @@
-export type ItemStateOnResizeStart = {
-  flexGrow: number;
-};
-
-export type ConfigItem = {
+export type LayoutItem = {
   id: string;
   flexGrow: number;
   maxFlexGrow?: number;

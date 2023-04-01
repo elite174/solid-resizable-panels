@@ -1,6 +1,6 @@
 import { Accessor, createEffect, createSignal, on, onCleanup } from "solid-js";
 import { SolidPanelStateAdapter } from "../store";
-import type { Direction, ItemStateOnResizeStart } from "../types";
+import type { Direction } from "../types";
 import { roundTo4Digits } from "../utils/math";
 
 import { CorrectionAccessors, createMouseDelta } from "../utils/mouse-delta";
@@ -44,8 +44,8 @@ export const useResize = ({
     on(resizablePanelId, (panelId) => {
       if (!panelId) return;
 
-      const stateBeforeResize: ItemStateOnResizeStart[] = state().config.map(
-        (item) => ({ flexGrow: item.flexGrow })
+      const flexGrowOnResizeStart: number[] = state().config.map(
+        (item) => item.flexGrow
       );
 
       const totalFlexGrow = roundTo4Digits(
@@ -79,7 +79,7 @@ export const useResize = ({
           );
 
           if (deltaFlexGrow !== 0)
-            onSizeChange(deltaFlexGrow, panelId, stateBeforeResize);
+            onSizeChange(deltaFlexGrow, panelId, flexGrowOnResizeStart);
         })
       );
 
@@ -90,7 +90,5 @@ export const useResize = ({
     })
   );
 
-  return {
-    createMouseDownHandler,
-  };
+  return createMouseDownHandler;
 };

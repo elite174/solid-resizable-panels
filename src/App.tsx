@@ -7,7 +7,7 @@ import styles from "./App.module.css";
 
 const App: Component = () => {
   const { setConfig, ...adapter } = createPanelStore({
-    config: [
+    layout: [
       {
         id: "1",
         flexGrow: 100,
