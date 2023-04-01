@@ -35,14 +35,12 @@ const App: Component = () => {
   }, 5000); */
 
   return (
-    <div class={styles.App}>
-      <SolidPanelGroup {...adapter}>
-        <div data-solid-panel-id="1">hi</div>
-        <div data-solid-panel-id="2">2</div>
-        <div data-solid-panel-id="3">3</div>
-        <div data-solid-panel-id="4">4</div>
-      </SolidPanelGroup>
-    </div>
+    <SolidPanelGroup {...adapter} class={styles.panelGroup}>
+      <div data-solid-panel-id="1">hi</div>
+      <div data-solid-panel-id="2">2</div>
+      <div data-solid-panel-id="3">3</div>
+      <div data-solid-panel-id="4">4</div>
+    </SolidPanelGroup>
   );
 };
 

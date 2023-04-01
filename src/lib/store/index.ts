@@ -16,7 +16,7 @@ const generateNewState = (
   resizableItemIndex: number,
   deltaSize: number
 ) => {
-  const result: (number | undefined)[] = new Array(
+  const updatedFlexGrowValues: (number | undefined)[] = new Array(
     flexGrowOnResizeStart.length
   );
   const deltaSizeAbs = Math.abs(deltaSize);
@@ -25,7 +25,7 @@ const generateNewState = (
   let revealedDeltaSizeLeft = 0;
   let spentDeltaSizeLeft = 0;
 
-  const resizeDirection = Math.sign(deltaSize) > 0 ? "left" : "right";
+  const resizeDirection = Math.sign(deltaSize) < 0 ? "left" : "right";
 
   const tryToCollapseLeftSide = () => {
     // Now if we have some budget
@@ -43,7 +43,7 @@ const generateNewState = (
         // Do this
         if (currentItem.collapsible) {
           if (currentItem.minFlexGrow < remainingDeltaSizeLeftAbs) {
-            result[i] = 0;
+            updatedFlexGrowValues[i] = 0;
 
             remainingDeltaSizeLeftAbs -= currentItem.minFlexGrow;
             // Don't need to iterate further because we don't have enough budget to collapse nearest item
@@ -70,7 +70,7 @@ const generateNewState = (
         // Do this
         if (currentItem.collapsible) {
           if (currentItem.minFlexGrow < remainingDeltaSizeRightAbs) {
-            result[i] = 0;
+            updatedFlexGrowValues[i] = 0;
 
             remainingDeltaSizeRightAbs -= currentItem.minFlexGrow;
             // Don't need to iterate further because we don't have enough budget to collapse nearest item
@@ -116,7 +116,7 @@ const generateNewState = (
 
     remainingDeltaSizeLeftAbs = remainingDeltaSizeLeftAbs - deltaSpent;
 
-    result[i] = newFlexGrow;
+    updatedFlexGrowValues[i] = newFlexGrow;
   }
 
   tryToCollapseLeftSide();
@@ -156,7 +156,7 @@ const generateNewState = (
 
     remainingDeltaSizeRightAbs -= deltaSpent;
 
-    result[i] = newFlexGrow;
+    updatedFlexGrowValues[i] = newFlexGrow;
   }
 
   tryToCollapseRightSide();
@@ -200,7 +200,7 @@ const generateNewState = (
         flexGrowOnResizeStart[i]
       );
 
-      result[i] = newFlexGrow;
+      updatedFlexGrowValues[i] = newFlexGrow;
     }
 
     tryToCollapseLeftSide();
@@ -235,13 +235,13 @@ const generateNewState = (
         flexGrowOnResizeStart[i]
       );
 
-      result[i] = newFlexGrow;
+      updatedFlexGrowValues[i] = newFlexGrow;
     }
 
     tryToCollapseRightSide();
   }
 
-  return result;
+  return updatedFlexGrowValues;
 };
 
 export const createPanelStore = ({ layout: config }: Params) => {
