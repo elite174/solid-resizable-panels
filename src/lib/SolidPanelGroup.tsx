@@ -89,7 +89,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
         [props.class ?? ""]: true,
       }}
     >
-      <For each={props.state.config}>
+      <For each={props.state.layout}>
         {(item, index) => {
           const child = () =>
             resolvedChildren().find(
@@ -100,22 +100,29 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
           return (
             <Show when={child()} keyed>
               {(content) => {
-                const isLast = () => index() === props.state.config.length - 1;
+                const isLast = () => index() === props.state.layout.length - 1;
+
+                const isResizeHandleVisible = () => item.static && !isLast();
+
+                const itemStyle = () =>
+                  item.static
+                    ? {
+                        "flex-grow": 0,
+                        "flex-shrink": 0,
+                      }
+                    : {
+                        "flex-grow": item.size,
+                        "flex-shrink": 1,
+                        "flex-basis": "0px",
+                        overflow: "hidden",
+                      };
 
                 return (
                   <>
-                    <div
-                      style={{
-                        "flex-grow": item.flexGrow,
-                        "flex-shrink": 1,
-                        "flex-basis": 0,
-                        overflow: "hidden",
-                      }}
-                      data-solid-panel
-                    >
+                    <div style={itemStyle()} data-solid-panel>
                       {content}
                     </div>
-                    <Show when={!isLast()}>
+                    <Show when={isResizeHandleVisible()}>
                       <button
                         data-solid-panel-resize-handle
                         class="resize-handle"

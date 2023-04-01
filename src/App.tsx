@@ -10,17 +10,15 @@ const App: Component = () => {
     layout: [
       {
         id: "1",
-        flexGrow: 100,
-        minFlexGrow: 20,
+        minSize: 20,
         collapsible: true,
       },
-      { id: "2", flexGrow: 100, minFlexGrow: 50, collapsible: true },
-      { id: "3", flexGrow: 100 },
+      { id: "2", minSize: 5, collapsible: true },
+      { id: "3", static: true },
       {
         id: "4",
-        flexGrow: 100,
-        minFlexGrow: 50,
-        maxFlexGrow: 110,
+        minSize: 5,
+        maxSize: 80,
         collapsible: true,
       },
     ],
