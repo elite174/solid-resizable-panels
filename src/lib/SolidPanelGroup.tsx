@@ -68,7 +68,7 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
     return validChildren;
   });
 
-  const { createMouseDownHandler } = useResize({
+  const createMouseDownHandler = useResize({
     zoom: () => props.zoom,
     scale: () => props.scale,
     direction: () => props.direction,
@@ -80,7 +80,6 @@ export const SolidPanelGroup: ParentComponent<Props> = (initialProps) => {
 
   return (
     <Dynamic
-      style={{ height: "100vh" }}
       component={props.tag}
       ref={setContainer}
       classList={{
