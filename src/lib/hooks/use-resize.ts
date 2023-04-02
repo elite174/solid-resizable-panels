@@ -10,7 +10,7 @@ import { useTotalPanelSizePX } from "./use-panel-size";
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
   state: Accessor<SolidPanelStateAdapter["state"]>;
-  onSizeChange: SolidPanelStateAdapter["onLayoutChange"];
+  onLayoutChange: SolidPanelStateAdapter["onLayoutChange"];
   reverse: Accessor<boolean>;
   containerRef: Accessor<HTMLElement | undefined>;
 }
@@ -19,7 +19,7 @@ export const useResize = ({
   zoom,
   scale,
   direction,
-  onSizeChange,
+  onLayoutChange,
   state,
   reverse,
   containerRef,
@@ -75,7 +75,7 @@ export const useResize = ({
           );
 
           if (deltaFlexGrow !== 0)
-            onSizeChange(deltaFlexGrow, panelId, flexGrowOnResizeStart);
+            onLayoutChange(deltaFlexGrow, panelId, flexGrowOnResizeStart);
         })
       );
 

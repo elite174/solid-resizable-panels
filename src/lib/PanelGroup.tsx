@@ -86,10 +86,10 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     zoom: () => props.zoom,
     scale: () => props.scale,
     direction: () => props.direction,
-    onSizeChange: onLayoutChange,
     state: () => state,
     reverse: () => props.reverse,
     containerRef,
+    onLayoutChange,
   });
 
   return (
