@@ -21,6 +21,7 @@ const App: Component = () => {
             id="2"
             collapsible
             index={1}
+            minSize={20}
             onCollapse={() => console.log("collapse")}
             onExpand={() => console.log("expand")}
           >
