@@ -1,44 +1,39 @@
-import type { Component } from "solid-js";
+import { Component, Show, createSignal } from "solid-js";
 
-import { SolidPanelGroup, createPanelStore } from "./lib";
+import { Panel, PanelGroup, ResizeHandle } from "./lib";
 import "./lib/styles.css";
 
 import styles from "./App.module.css";
 
 const App: Component = () => {
-  const { setConfig, ...adapter } = createPanelStore({
-    layout: [
-      {
-        id: "1",
-        minSize: 20,
-        collapsible: true,
-      },
-      { id: "2", minSize: 5, collapsible: true },
-      { id: "3", static: true },
-      {
-        id: "4",
-        minSize: 5,
-        maxSize: 80,
-        collapsible: true,
-      },
-    ],
-  });
-
-  /* setTimeout(() => {
-    setConfig([
-      { id: "1", flexGrow: 1, collapsible: false },
-      { id: "2", flexGrow: 1 },
-      { id: "3", flexGrow: 1 },
-    ]);
-  }, 5000); */
+  const [visible, setVisible] = createSignal(true);
 
   return (
-    <SolidPanelGroup {...adapter} class={styles.panelGroup}>
-      <div data-solid-panel-id="1">hi</div>
-      <div data-solid-panel-id="2">2</div>
-      <div data-solid-panel-id="3">3</div>
-      <div data-solid-panel-id="4">4</div>
-    </SolidPanelGroup>
+    <>
+      <button onClick={() => setVisible((v) => !v)}>toggle</button>
+      <PanelGroup class={styles.panelGroup}>
+        <Panel id="1" index={0}>
+          <div>1</div>
+        </Panel>
+        <ResizeHandle />
+        <Show when={visible()}>
+          <Panel
+            id="2"
+            collapsible
+            index={1}
+            minSize={20}
+            onCollapse={() => console.log("collapse")}
+            onExpand={() => console.log("expand")}
+          >
+            <div>2</div>
+          </Panel>
+          <ResizeHandle />
+        </Show>
+        <Panel id="3" index={2}>
+          <div>3</div>
+        </Panel>
+      </PanelGroup>
+    </>
   );
 };
 
