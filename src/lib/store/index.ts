@@ -12,7 +12,7 @@ interface Params {
 const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
   Math.abs(newFlexGrow - initialFlexGrow);
 
-const generateNewState = (
+export const generateNewState = (
   layout: ResolvedLayoutItem[],
   flexGrowOnResizeStart: (number | undefined)[],
   resizableItemIndex: number,
@@ -300,7 +300,6 @@ export const createPanelStore = ({ layout }: Params) => {
 
   const onLayoutChange = (
     deltaSize: number,
-    // TODO pass panelIndex here?
     panelId: string,
     flexGrowOnResizeStart: (undefined | number)[]
   ) => {

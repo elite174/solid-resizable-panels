@@ -33,10 +33,10 @@ export const useResize = ({
     string | undefined
   >(undefined);
 
-  const createMouseDownHandler = (id: string) => (e: MouseEvent) => {
+  const createMouseDownHandler = (id: Accessor<string>) => (e: MouseEvent) => {
     mouseDelta.init(e);
 
-    setResizablePanelId(id);
+    setResizablePanelId(id());
   };
 
   const containerSize = useAvailableSpace({ container, direction });
