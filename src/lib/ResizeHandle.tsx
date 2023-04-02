@@ -1,9 +1,10 @@
-import { ParentComponent, mergeProps, onMount, useContext } from "solid-js";
+import type { ParentComponent } from "solid-js";
+import { mergeProps, onMount, useContext } from "solid-js";
+import { Dynamic } from "solid-js/web";
 
 import { PanelContext } from "./context";
 import { makeLogText } from "./utils/log";
 import { SOLID_PANEL_HANDLE_ATTRIBUTE_NAME } from "./constants";
-import { Dynamic } from "solid-js/web";
 
 interface ResizeHandleProps {
   tag?: string;
@@ -29,6 +30,7 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (
   let panelId = "";
 
   // ResizeHandle should be mounter right after Panel
+  // hmm, how to force users to do this...
   onMount(() => {
     panelId = context.getHandleId();
   });

@@ -7,15 +7,14 @@ import {
 } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { Dynamic } from "solid-js/web";
-import { TOTAL_FLEX_GROW } from "./constants";
 
 import { useResize } from "./hooks/use-resize";
 import { createPanelStore } from "./store";
-import { Direction, LayoutItem, ResolvedLayoutItem } from "./types";
+import type { Direction, LayoutItem } from "./types";
 
-import { roundTo4Digits } from "./utils/math";
 import { PanelContext } from "./context";
-import { makeLogText } from "./utils/log";
+import type { IPanelContext } from "./context";
+import { preprocessLayout } from "./utils/preprocess-layout";
 
 interface PanelGroupProps {
   direction?: Direction;
@@ -42,55 +41,9 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     HTMLElement | undefined
   >();
 
-  const [initialState, setInitialState] = createStore<{
-    layout: LayoutItem[];
-  }>({
-    layout: [],
-  });
+  const [initialLayout, setInitialLayout] = createStore<LayoutItem[]>([]);
 
-  const processedLayout = createMemo<ResolvedLayoutItem[]>(() => {
-    let itemCountWithUndefinedSize = 0;
-    let spentFlexGrow = 0;
-
-    initialState.layout.forEach((item) => {
-      if (item.size) spentFlexGrow += item.size;
-      else itemCountWithUndefinedSize++;
-    });
-
-    const remainingFlexGrowPerItem = roundTo4Digits(
-      (TOTAL_FLEX_GROW - spentFlexGrow) / itemCountWithUndefinedSize
-    );
-
-    return initialState.layout.map((item) => {
-      const resolvedItem = {
-        id: item.id,
-        size: item.size ?? remainingFlexGrowPerItem,
-        minSize: item.minSize ?? 0,
-        maxSize: item.maxSize ?? Infinity,
-        collapsible: Boolean(item.collapsible),
-      };
-
-      const errorMinSize = resolvedItem.size < resolvedItem.minSize;
-      const errorMaxSize = resolvedItem.size > resolvedItem.maxSize;
-
-      if (errorMinSize || errorMaxSize)
-        console.warn(
-          makeLogText(
-            `Error. Item with id="${
-              item.id
-            }" has wrong size limitations: its size (${
-              resolvedItem.size
-            }%) is ${errorMinSize ? "less" : "more"} than ${
-              errorMinSize ? "minimum" : "maximum"
-            } size (${
-              errorMinSize ? resolvedItem.minSize : resolvedItem.maxSize
-            }%). `
-          )
-        );
-
-      return resolvedItem;
-    });
-  });
+  const processedLayout = createMemo(() => preprocessLayout(initialLayout));
 
   const { state, setConfig, onLayoutChange } = createPanelStore(
     processedLayout()
@@ -102,13 +55,13 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
   let lastRegisterPanelId = "";
 
-  const registerPanel = (data: LayoutItem, index?: number) => {
-    setInitialState(
-      produce((s) => {
+  const registerPanel: IPanelContext["registerPanel"] = (data, index) => {
+    setInitialLayout(
+      produce((layout) => {
         if (index) {
-          s.layout.splice(index, 0, data);
+          layout.splice(index, 0, data);
         } else {
-          s.layout.push(data);
+          layout.push(data);
         }
       })
     );
@@ -116,15 +69,15 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     lastRegisterPanelId = data.id;
   };
 
-  const unregisterPanel = (panelId: string) => {
-    setInitialState(
-      produce((s) => {
-        s.layout = s.layout.filter((data) => data.id !== panelId);
+  const unregisterPanel: IPanelContext["unregisterPanel"] = (panelId) => {
+    setInitialLayout(
+      produce((layout) => {
+        layout = layout.filter((data) => data.id !== panelId);
       })
     );
   };
 
-  const useData = (panelId: string) =>
+  const useData: IPanelContext["useData"] = (panelId) =>
     createMemo(() => state.layout.find((item) => item.id === panelId));
 
   const getHandleId = () => lastRegisterPanelId;

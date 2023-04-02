@@ -1,5 +1,5 @@
+import type { ParentComponent } from "solid-js";
 import {
-  ParentComponent,
   Show,
   createEffect,
   on,
@@ -7,6 +7,7 @@ import {
   onMount,
   useContext,
 } from "solid-js";
+
 import { PanelContext } from "./context";
 import { makeLogText } from "./utils/log";
 import { SOLID_PANEL_ATTRIBUTE_NAME } from "./constants";
@@ -35,10 +36,12 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
     return null;
   }
 
+  const { registerPanel, unregisterPanel, useData } = context;
+
   onMount(() => {
     const panelId = props.id;
 
-    context.registerPanel(
+    registerPanel(
       {
         id: props.id,
         size: props.size,
@@ -49,10 +52,10 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
       props.index
     );
 
-    onCleanup(() => context.unregisterPanel(panelId));
+    onCleanup(() => unregisterPanel(panelId));
   });
 
-  const data = context.useData(props.id);
+  const data = useData(props.id);
 
   return (
     <Show when={data()} keyed>

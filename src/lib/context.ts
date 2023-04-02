@@ -1,14 +1,14 @@
 import { Accessor, createContext } from "solid-js";
-import { LayoutItem, ResolvedLayoutItem } from "./types";
 
-export interface PanelContext {
+import type { LayoutItem, ResolvedLayoutItem } from "./types";
+import type { MouseDownHandlerCreator } from "./hooks/use-resize";
+
+export interface IPanelContext {
   registerPanel: (panelData: LayoutItem, index?: number) => void;
   unregisterPanel: (panelId: string) => void;
   useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
-  createMouseDownHandler: (
-    panelId: Accessor<string>
-  ) => (e: MouseEvent) => void;
+  createMouseDownHandler: MouseDownHandlerCreator;
   getHandleId: () => string;
 }
 
-export const PanelContext = createContext<PanelContext>();
+export const PanelContext = createContext<IPanelContext>();

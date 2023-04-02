@@ -88,3 +88,5 @@ export const useResize = ({
 
   return createMouseDownHandler;
 };
+
+export type MouseDownHandlerCreator = ReturnType<typeof useResize>;
