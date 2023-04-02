@@ -1,13 +1,7 @@
 import { createStore, produce, reconcile } from "solid-js/store";
-import { TOTAL_FLEX_GROW } from "../constants";
 
-import type { LayoutItem, ResolvedLayoutItem } from "../types";
-import { makeLogText } from "../utils/log";
-import { clamp, EPSILON, isZero, roundTo4Digits } from "../utils/math";
-
-interface Params {
-  layout: LayoutItem[];
-}
+import type { ResolvedLayoutItem } from "../types";
+import { clamp, EPSILON, isZero } from "../utils/math";
 
 const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
   Math.abs(newFlexGrow - initialFlexGrow);
@@ -85,8 +79,6 @@ export const generateNewState = (
 
   // Firstly try to change the left side
   for (let i = resizableItemIndex; i >= 0; i--) {
-    if (layout[i].static) continue;
-
     const initialFlexGrow = flexGrowOnResizeStart[i] ?? 0;
 
     // We can't shrink this item even more
@@ -125,8 +117,6 @@ export const generateNewState = (
 
   // Now try to change right side
   for (let i = resizableItemIndex + 1; i < layout.length; i++) {
-    if (layout[i].static) continue;
-
     const initialFlexGrow = flexGrowOnResizeStart[i] ?? 0;
 
     // We can't shrink this item even more
@@ -176,8 +166,6 @@ export const generateNewState = (
     remainingDeltaSizeLeftAbs = spentDeltaSizeRight;
 
     for (let i = resizableItemIndex; i >= 0; i--) {
-      if (layout[i].static) continue;
-
       const initialFlexGrow = flexGrowOnResizeStart[i] ?? 0;
       // We can't shrink this item even more
       if (flexGrowOnResizeStart[i] === 0 && Math.sign(deltaSize) < 0) continue;
@@ -210,8 +198,6 @@ export const generateNewState = (
     remainingDeltaSizeRightAbs = spentDeltaSizeLeft;
 
     for (let i = resizableItemIndex + 1; i < layout.length; i++) {
-      if (layout[i].static) continue;
-
       const initialFlexGrow = flexGrowOnResizeStart[i] ?? 0;
 
       // We can't shrink this item even more
@@ -246,57 +232,14 @@ export const generateNewState = (
   return updatedFlexGrowValues;
 };
 
-const preprocessLayout = (layout: LayoutItem[]): ResolvedLayoutItem[] => {
-  let itemCountWithUndefinedSize = 0;
-  let spentFlexGrow = 0;
-
-  layout.forEach((item) => {
-    if (item.size) spentFlexGrow += item.size;
-    else if (!item.static) itemCountWithUndefinedSize++;
-  });
-
-  const remainingFlexGrowPerItem = roundTo4Digits(
-    (TOTAL_FLEX_GROW - spentFlexGrow) / itemCountWithUndefinedSize
-  );
-
-  return layout.map((item) => {
-    const resolvedItem = {
-      id: item.id,
-      size: item.size ?? remainingFlexGrowPerItem,
-      minSize: item.minSize ?? 0,
-      maxSize: item.maxSize ?? Infinity,
-      collapsible: Boolean(item.collapsible),
-      static: Boolean(item.static),
-    };
-
-    const errorMinSize = resolvedItem.size < resolvedItem.minSize;
-    const errorMaxSize = resolvedItem.size > resolvedItem.maxSize;
-
-    if (errorMinSize || errorMaxSize)
-      console.warn(
-        makeLogText(
-          `Error. Item with id="${
-            item.id
-          }" has wrong size limitations: its size (${resolvedItem.size}%) is ${
-            errorMinSize ? "less" : "more"
-          } than ${errorMinSize ? "minimum" : "maximum"} size (${
-            errorMinSize ? resolvedItem.minSize : resolvedItem.maxSize
-          }%). `
-        )
-      );
-
-    return resolvedItem;
-  });
-};
-
-export const createPanelStore = ({ layout }: Params) => {
+export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
   const [state, setState] = createStore(
-    { layout: preprocessLayout(layout) },
+    { layout: resolvedLayout },
     { name: "PanelStore" }
   );
 
-  const setConfig = (layout: LayoutItem[]) =>
-    setState("layout", reconcile(preprocessLayout(layout)));
+  const setConfig = (resolvedLayout: ResolvedLayoutItem[]) =>
+    setState("layout", reconcile(resolvedLayout));
 
   const onLayoutChange = (
     deltaSize: number,
