@@ -49,7 +49,7 @@ export const useResize = ({
         direction
       );
 
-      const flexGrowOnResizeStart: (number | undefined)[] = state().layout.map(
+      const flexGrowOnResizeStart: number[] = state().layout.map(
         (item) => item.size
       );
 

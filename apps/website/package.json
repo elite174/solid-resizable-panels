@@ -1,0 +1,23 @@
+{
+  "name": "solid-resizable-panels-site",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/solid-js": "^2.1.0",
+    "@astrojs/tailwind": "^3.1.1",
+    "astro": "^2.1.9",
+    "solid-js": "^1.7.1",
+    "solid-resizable-panels": "workspace:0.1.0-alpha",
+    "tailwindcss": "^3.0.24"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "typescript": "^5.0.3"
+  }
+}

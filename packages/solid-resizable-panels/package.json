@@ -1,0 +1,60 @@
+{
+  "name": "solid-resizable-panels",
+  "version": "0.1.0-alpha",
+  "description": "Solid-js components for making resizable panels",
+  "type": "module",
+  "main": "dist/server/index.js",
+  "module": "dist/index/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/server/index.js",
+      "import": "./dist/index/index.js",
+      "browser": "./dist/index/index.js",
+      "node": "./dist/server/index.js"
+    },
+    "./dist/*": "./dist/*"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup -c rollup.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elite174/solid-panels.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "solid-js",
+    "resizable",
+    "panels",
+    "component"
+  ],
+  "author": "Vladislav Lipatov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elite174/solid-panels/issues"
+  },
+  "homepage": "https://github.com/elite174/solid-panels#readme",
+  "peerDependencies": {
+    "solid-js": "^1.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "@babel/preset-typescript": "^7.21.4",
+    "babel-preset-solid": "^1.7.1",
+    "rollup": "^3.10.1",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-preset-solid": "^2.0.1",
+    "solid-js": "^1.7.0",
+    "typescript": "^5.0.3",
+    "vite": "^4.2.1",
+    "vite-plugin-solid": "^2.6.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
