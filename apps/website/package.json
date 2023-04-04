@@ -12,12 +12,15 @@
     "@astrojs/solid-js": "^2.1.0",
     "@astrojs/tailwind": "^3.1.1",
     "astro": "^2.1.9",
+    "highlight.js": "^11.7.0",
+    "prismjs": "^1.29.0",
     "solid-js": "^1.7.1",
     "solid-resizable-panels": "workspace:0.1.0-alpha",
     "tailwindcss": "^3.0.24"
   },
   "devDependencies": {
     "@babel/core": "^7.21.4",
+    "@types/prismjs": "^1.26.0",
     "typescript": "^5.0.3"
   }
 }

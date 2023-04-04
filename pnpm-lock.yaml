@@ -19,7 +19,10 @@ importers:
       '@astrojs/solid-js': ^2.1.0
       '@astrojs/tailwind': ^3.1.1
       '@babel/core': ^7.21.4
+      '@types/prismjs': ^1.26.0
       astro: ^2.1.9
+      highlight.js: ^11.7.0
+      prismjs: ^1.29.0
       solid-js: ^1.7.1
       solid-resizable-panels: workspace:0.1.0-alpha
       tailwindcss: ^3.0.24
@@ -28,11 +31,14 @@ importers:
       '@astrojs/solid-js': 2.1.0_f4zrvcpzyjzfm2x4km6zvytj3m
       '@astrojs/tailwind': 3.1.1_lb4ceowfm56hgzfjjkqijna7me
       astro: 2.1.9
+      highlight.js: 11.7.0
+      prismjs: 1.29.0
       solid-js: 1.7.1
       solid-resizable-panels: link:../../packages/solid-resizable-panels
       tailwindcss: 3.3.1
     devDependencies:
       '@babel/core': 7.21.4
+      '@types/prismjs': 1.26.0
       typescript: 5.0.3
 
   packages/solid-resizable-panels:
@@ -1811,6 +1817,10 @@ packages:
     resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}
     dev: false
 
+  /@types/prismjs/1.26.0:
+    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
+    dev: true
+
   /@types/resolve/1.20.2:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
 
@@ -3005,6 +3015,11 @@ packages:
       hast-util-parse-selector: 3.1.1
       property-information: 6.2.0
       space-separated-tokens: 2.0.2
+    dev: false
+
+  /highlight.js/11.7.0:
+    resolution: {integrity: sha512-1rRqesRFhMO/PRF+G86evnyJkCgaZFOI+Z6kdj15TA18funfoqJXvgPCLSf0SWq3SRfg1j3HlDs8o4s3EGq1oQ==}
+    engines: {node: '>=12.0.0'}
     dev: false
 
   /html-entities/2.3.3:

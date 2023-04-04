@@ -3,21 +3,21 @@ import { ResizeHandle } from 'solid-resizable-panels';
 
 import { PanelGroup, Panel } from '../components';
 
-export const Horizontal: VoidComponent = () => (
-  <PanelGroup>
+export const Vertical: VoidComponent = () => (
+  <PanelGroup direction="column">
     <Panel id="1">Panel 1</Panel>
     <ResizeHandle />
-    <Panel id="2">Panel 2</Panel>
+    <Panel id="2">Panel 1</Panel>
     <ResizeHandle />
-    <Panel id="3">Panel 3</Panel>
+    <Panel id="3">Panel 1</Panel>
   </PanelGroup>
 );
 
-export const horizontalCode = `<PanelGroup>
+export const verticalCode = `<PanelGroup direction="column">
   <Panel id="1">Panel 1</Panel>
   <ResizeHandle />
-  <Panel id="2">Panel 2</Panel>
+  <Panel id="2">Panel 1</Panel>
   <ResizeHandle />
-  <Panel id="3">Panel 3</Panel>
+  <Panel id="3">Panel 1</Panel>
 </PanelGroup>
 `;

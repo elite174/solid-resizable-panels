@@ -1,24 +1,82 @@
 ---
-import { Horizontal } from "../examples/Horizontal";
+import 'solid-resizable-panels/styles.css';
+
+import { Highlighter } from '../highlighter';
+
+import type { Example } from '../examples/index';
+import { Examples, codeMap } from '../examples/index';
+
+interface ExampleItem {
+  title: string;
+  example: Example;
+}
+
+const examples: ExampleItem[] = [
+  {
+    title: 'Horizontal layout',
+    example: 'horizontal',
+  },
+  { title: 'Vertical layout', example: 'vertical' },
+  { title: 'Nested layout', example: 'nested' },
+  { title: 'Collapsible panels', example: 'collapsible' },
+];
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"
+    ></script>
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Astro</title>
   </head>
-  <body class="flex h-screen">
-    <nav class="w h-full">
-      <a href="#horizontal"></a>
-    </nav>
-    <main class="w-full h-full">
-      <section>
-        <h2>Horizontal layout</h2>
-        <Horizontal client:visible />
-      </section>
+  <body class="grid grid-cols-[1fr] grid-rows-[auto_1fr] gap-4 h-screen bg-[#111] text-white">
+    <header class="flex justify-between p-4 items-center">
+      <h1 class="bold text-2xl">Solid resizable panels</h1>
+      <a href="" class="hover:text-gray-600 transition">Github</a>
+    </header>
+    <main class="flex h-full overflow-hidden">
+      <nav class="w h-full flex flex-col gap-4 shrink-0 py-2">
+        <h2 class="bold px-4 text-xl text-red-700">Examples</h2>
+        <ul class="flex flex-col gap-2">
+          {
+            Object.values(examples).map((item) => (
+              <li class="w-full hover:text-red-700 transition rounded">
+                <a class="block px-4 py-2" href={`#${item.example}`}>
+                  {item.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <ul class="w-full h-full overflow-auto snap-y snap-mandatory pr-4 scroll-smooth">
+        {
+          Object.values(examples).map((item: ExampleItem) => (
+            <li class="h-full snap-center">
+              <section
+                class="grid grid-cols-[1fr] grid-rows-[auto_1fr_auto] gap-4 h-full py-2"
+                id={item.example}
+              >
+                <h2 class="bold text-xl">{item.title}</h2>
+                <div class="rounded overflow-hidden">
+                  <Examples example={item.example} client:visible />
+                </div>
+                <section class="flex flex-col gap-2">
+                  <h3 class="text-xl bold text-gray-500">The code:</h3>
+                  <Highlighter text={codeMap[item.example]} />
+                </section>
+              </section>
+            </li>
+          ))
+        }
+      </ul>
     </main>
   </body>
 </html>
