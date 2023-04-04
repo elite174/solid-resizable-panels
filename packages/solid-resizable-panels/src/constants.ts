@@ -7,4 +7,5 @@ export const enum CLASSNAMES {
   panelGroup = 'ResizeablePanelGroup',
   panelGroupVertical = 'ResizeablePanelGroup_vertical',
   resizeHandle = 'ResizeablePanelGroup-ResizeHandle',
+  panel = 'ResizeablePanelGroup-Panel',
 }

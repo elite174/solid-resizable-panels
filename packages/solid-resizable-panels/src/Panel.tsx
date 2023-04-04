@@ -3,7 +3,7 @@ import { createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
 
 import { PanelContext } from './context';
 import { makeLogText } from './utils/log';
-import { SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
+import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
 
 interface PanelProps {
   id: string;
@@ -12,6 +12,7 @@ interface PanelProps {
   minSize?: number;
   maxSize?: number;
   collapsible?: boolean;
+  class?: string;
   onCollapse?: () => void;
   onExpand?: () => void;
 }
@@ -94,6 +95,7 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
   return (
     <div
       {...{ [SOLID_PANEL_ID_ATTRIBUTE_NAME]: props.id }}
+      classList={{ [CLASSNAMES.panel]: true, [props.class ?? '']: true }}
       style={{
         'flex-grow': flexGrow(),
         'flex-shrink': 1,
