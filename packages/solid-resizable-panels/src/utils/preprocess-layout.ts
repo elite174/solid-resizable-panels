@@ -1,12 +1,10 @@
-import type { LayoutItem, ResolvedLayoutItem } from "../types";
+import type { LayoutItem, ResolvedLayoutItem } from '../types';
 
-import { TOTAL_FLEX_GROW } from "../constants";
-import { makeLogText } from "./log";
-import { roundTo4Digits } from "./math";
+import { TOTAL_FLEX_GROW } from '../constants';
+import { makeLogText } from './log';
+import { roundTo4Digits } from './math';
 
-export const preprocessLayout = (
-  layout: LayoutItem[]
-): ResolvedLayoutItem[] => {
+export const preprocessLayout = (layout: LayoutItem[]): ResolvedLayoutItem[] => {
   let itemCountWithUndefinedSize = 0;
   let spentFlexGrow = 0;
 
@@ -16,7 +14,7 @@ export const preprocessLayout = (
   });
 
   const remainingFlexGrowPerItem = roundTo4Digits(
-    (TOTAL_FLEX_GROW - spentFlexGrow) / itemCountWithUndefinedSize
+    (TOTAL_FLEX_GROW - spentFlexGrow) / itemCountWithUndefinedSize,
   );
 
   return layout.map((item) => {
@@ -34,14 +32,12 @@ export const preprocessLayout = (
     if (errorMinSize || errorMaxSize)
       console.warn(
         makeLogText(
-          `Error. Item with id="${
-            item.id
-          }" has wrong size limitations: its size (${resolvedItem.size}%) is ${
-            errorMinSize ? "less" : "more"
-          } than ${errorMinSize ? "minimum" : "maximum"} size (${
-            errorMinSize ? resolvedItem.minSize : resolvedItem.maxSize
-          }%). `
-        )
+          `Error. Item with id="${item.id}" has wrong size limitations: its size (${
+            resolvedItem.size
+          }%) is ${errorMinSize ? 'less' : 'more'} than ${
+            errorMinSize ? 'minimum' : 'maximum'
+          } size (${errorMinSize ? resolvedItem.minSize : resolvedItem.maxSize}%). `,
+        ),
       );
 
     return resolvedItem;

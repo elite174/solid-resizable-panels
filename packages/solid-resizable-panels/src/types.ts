@@ -14,4 +14,4 @@ export interface ResolvedLayoutItem {
   collapsible: boolean;
 }
 
-export type Direction = "row" | "column" | "row-reverse" | "column-reverse";
+export type Direction = 'row' | 'column' | 'row-reverse' | 'column-reverse';

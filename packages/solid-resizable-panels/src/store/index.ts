@@ -1,7 +1,7 @@
-import { createStore, produce, reconcile } from "solid-js/store";
+import { createStore, produce, reconcile } from 'solid-js/store';
 
-import type { ResolvedLayoutItem } from "../types";
-import { clamp, EPSILON, isZero, roundTo4Digits } from "../utils/math";
+import type { ResolvedLayoutItem } from '../types';
+import { clamp, EPSILON, isZero, roundTo4Digits } from '../utils/math';
 
 const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
   Math.abs(newFlexGrow - initialFlexGrow);
@@ -10,18 +10,16 @@ export const generateNewState = (
   resolvedLayout: ResolvedLayoutItem[],
   flexGrowOnResizeStart: number[],
   resizableItemIndex: number,
-  deltaSize: number
+  deltaSize: number,
 ) => {
-  const updatedFlexGrowValues: number[] = new Array(
-    flexGrowOnResizeStart.length
-  );
+  const updatedFlexGrowValues: number[] = new Array(flexGrowOnResizeStart.length);
   const deltaSizeAbs = Math.abs(deltaSize);
 
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
   let revealedDeltaSizeLeft = 0;
   let spentDeltaSizeLeft = 0;
 
-  const resizeDirection = Math.sign(deltaSize) < 0 ? "left" : "right";
+  const resizeDirection = Math.sign(deltaSize) < 0 ? 'left' : 'right';
 
   const tryToCollapseLeftSide = () => {
     // Now if we have some budget
@@ -29,7 +27,7 @@ export const generateNewState = (
     // We need to collapse them one by one:
     // If we don't have enough budget to collapse
     // stop iterate on items
-    if (resizeDirection === "left" && remainingDeltaSizeLeftAbs > EPSILON) {
+    if (resizeDirection === 'left' && remainingDeltaSizeLeftAbs > EPSILON) {
       for (let i = resizableItemIndex; i >= 0; i--) {
         if (flexGrowOnResizeStart[i] === 0) continue;
 
@@ -53,7 +51,7 @@ export const generateNewState = (
     // We need to collapse them one by one:
     // If we don't have enough budget to collapse
     // stop iterate on items
-    if (resizeDirection === "right" && remainingDeltaSizeRightAbs > EPSILON) {
+    if (resizeDirection === 'right' && remainingDeltaSizeRightAbs > EPSILON) {
       for (let i = resizableItemIndex + 1; i < resolvedLayout.length; i++) {
         if (flexGrowOnResizeStart[i] === 0) continue;
 
@@ -81,24 +79,21 @@ export const generateNewState = (
     const initialFlexGrow = flexGrowOnResizeStart[i];
 
     // We can't shrink this item even more
-    if (flexGrowOnResizeStart[i] === 0 && resizeDirection === "left") {
+    if (flexGrowOnResizeStart[i] === 0 && resizeDirection === 'left') {
       updatedFlexGrowValues[i] = 0;
 
       continue;
     }
 
-    const virtualFlexGrow =
-      initialFlexGrow + remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
+    const virtualFlexGrow = initialFlexGrow + remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
 
     const revealed =
-      resolvedLayout[i].collapsible &&
-      isZero(initialFlexGrow) &&
-      virtualFlexGrow > EPSILON;
+      resolvedLayout[i].collapsible && isZero(initialFlexGrow) && virtualFlexGrow > EPSILON;
 
     const newFlexGrow = clamp(
       virtualFlexGrow,
       resolvedLayout[i].minSize,
-      resolvedLayout[i].maxSize
+      resolvedLayout[i].maxSize,
     );
 
     const deltaSpent = computeSpentFlexGrow(newFlexGrow, initialFlexGrow);
@@ -123,24 +118,21 @@ export const generateNewState = (
     const initialFlexGrow = flexGrowOnResizeStart[i];
 
     // We can't shrink this item even more
-    if (flexGrowOnResizeStart[i] === 0 && resizeDirection === "right") {
+    if (flexGrowOnResizeStart[i] === 0 && resizeDirection === 'right') {
       updatedFlexGrowValues[i] = 0;
 
       continue;
     }
 
-    const virtualFlexGrow = // Minus here is because we're changing right side
-      initialFlexGrow - remainingDeltaSizeRightAbs * Math.sign(deltaSize);
+    const virtualFlexGrow = initialFlexGrow - remainingDeltaSizeRightAbs * Math.sign(deltaSize); // Minus here is because we're changing right side
 
     const revealed =
-      resolvedLayout[i].collapsible &&
-      isZero(initialFlexGrow) &&
-      virtualFlexGrow > EPSILON;
+      resolvedLayout[i].collapsible && isZero(initialFlexGrow) && virtualFlexGrow > EPSILON;
 
     const newFlexGrow = clamp(
       virtualFlexGrow,
       resolvedLayout[i].minSize,
-      resolvedLayout[i].maxSize
+      resolvedLayout[i].maxSize,
     );
 
     const deltaSpent = computeSpentFlexGrow(newFlexGrow, initialFlexGrow);
@@ -156,16 +148,8 @@ export const generateNewState = (
 
   tryToCollapseRightSide();
 
-  spentDeltaSizeLeft = clamp(
-    spentDeltaSizeLeft - revealedDeltaSizeLeft,
-    0,
-    Infinity
-  );
-  spentDeltaSizeRight = clamp(
-    spentDeltaSizeRight - revealedDeltaSizeRight,
-    0,
-    Infinity
-  );
+  spentDeltaSizeLeft = clamp(spentDeltaSizeLeft - revealedDeltaSizeLeft, 0, Infinity);
+  spentDeltaSizeRight = clamp(spentDeltaSizeRight - revealedDeltaSizeRight, 0, Infinity);
 
   // here we need to correct left side
   // because we can't resize it more than right side
@@ -176,14 +160,13 @@ export const generateNewState = (
       const initialFlexGrow = flexGrowOnResizeStart[i];
 
       // We can't shrink this item even more
-      if (flexGrowOnResizeStart[i] === 0 && resizeDirection === "left") {
+      if (flexGrowOnResizeStart[i] === 0 && resizeDirection === 'left') {
         updatedFlexGrowValues[i] = 0;
 
         continue;
       }
 
-      const virtualFlexGrow =
-        initialFlexGrow + remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
+      const virtualFlexGrow = initialFlexGrow + remainingDeltaSizeLeftAbs * Math.sign(deltaSize);
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
@@ -192,13 +175,10 @@ export const generateNewState = (
       const newFlexGrow = clamp(
         virtualFlexGrow,
         resolvedLayout[i].minSize,
-        resolvedLayout[i].maxSize
+        resolvedLayout[i].maxSize,
       );
 
-      remainingDeltaSizeLeftAbs -= computeSpentFlexGrow(
-        newFlexGrow,
-        initialFlexGrow
-      );
+      remainingDeltaSizeLeftAbs -= computeSpentFlexGrow(newFlexGrow, initialFlexGrow);
 
       updatedFlexGrowValues[i] = newFlexGrow;
     }
@@ -213,14 +193,13 @@ export const generateNewState = (
       const initialFlexGrow = flexGrowOnResizeStart[i];
 
       // We can't shrink this item even more
-      if (initialFlexGrow === 0 && resizeDirection === "right") {
+      if (initialFlexGrow === 0 && resizeDirection === 'right') {
         updatedFlexGrowValues[i] = 0;
 
         continue;
       }
 
-      const virtualFlexGrow =
-        initialFlexGrow - remainingDeltaSizeRightAbs * Math.sign(deltaSize);
+      const virtualFlexGrow = initialFlexGrow - remainingDeltaSizeRightAbs * Math.sign(deltaSize);
       // we could get further on the first try
       // so if we don't have budget to resize
       // we need to clean up further items
@@ -231,13 +210,10 @@ export const generateNewState = (
         // Minus here is because we're changing right side
         virtualFlexGrow,
         resolvedLayout[i].minSize,
-        resolvedLayout[i].maxSize
+        resolvedLayout[i].maxSize,
       );
 
-      remainingDeltaSizeRightAbs -= computeSpentFlexGrow(
-        newFlexGrow,
-        initialFlexGrow
-      );
+      remainingDeltaSizeRightAbs -= computeSpentFlexGrow(newFlexGrow, initialFlexGrow);
 
       updatedFlexGrowValues[i] = newFlexGrow;
     }
@@ -249,22 +225,13 @@ export const generateNewState = (
 };
 
 export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
-  const [state, setState] = createStore(
-    { layout: resolvedLayout },
-    { name: "PanelStore" }
-  );
+  const [state, setState] = createStore({ layout: resolvedLayout }, { name: 'PanelStore' });
 
   const setConfig = (resolvedLayout: ResolvedLayoutItem[]) =>
-    setState("layout", reconcile(resolvedLayout));
+    setState('layout', reconcile(resolvedLayout));
 
-  const onLayoutChange = (
-    deltaSize: number,
-    panelId: string,
-    flexGrowOnResizeStart: number[]
-  ) => {
-    const resizableItemIndex = state.layout.findIndex(
-      (item) => item.id === panelId
-    );
+  const onLayoutChange = (deltaSize: number, panelId: string, flexGrowOnResizeStart: number[]) => {
+    const resizableItemIndex = state.layout.findIndex((item) => item.id === panelId);
 
     // TODO handle error somehow
     if (resizableItemIndex === -1) return;
@@ -273,17 +240,16 @@ export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
       state.layout,
       flexGrowOnResizeStart,
       resizableItemIndex,
-      deltaSize
+      deltaSize,
     );
 
     setState(
       produce((s) => {
         for (let i = 0; i < newState.length; i++) {
           // hate TS for this
-          if (newState[i] !== undefined)
-            s.layout[i].size = roundTo4Digits(newState[i]!);
+          if (newState[i] !== undefined) s.layout[i].size = roundTo4Digits(newState[i]!);
         }
-      })
+      }),
     );
   };
 

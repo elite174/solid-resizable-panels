@@ -1,9 +1,9 @@
-import type { ParentComponent } from "solid-js";
-import { createEffect, on, onCleanup, onMount, useContext } from "solid-js";
+import type { ParentComponent } from 'solid-js';
+import { createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
 
-import { PanelContext } from "./context";
-import { makeLogText } from "./utils/log";
-import { SOLID_PANEL_ATTRIBUTE_NAME } from "./constants";
+import { PanelContext } from './context';
+import { makeLogText } from './utils/log';
+import { SOLID_PANEL_ATTRIBUTE_NAME } from './constants';
 
 interface PanelProps {
   id: string;
@@ -21,9 +21,7 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
 
   if (!context) {
     console.warn(
-      makeLogText(
-        `Error: Panel component must be rendered inside PanelGroup component`
-      )
+      makeLogText(`Error: Panel component must be rendered inside PanelGroup component`),
     );
 
     return null;
@@ -42,7 +40,7 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
         maxSize: props.maxSize,
         collapsible: props.collapsible,
       },
-      props.index
+      props.index,
     );
 
     onCleanup(() => unregisterPanel(panelId));
@@ -67,9 +65,9 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
 
                     return size;
                   },
-                  { defer: true }
+                  { defer: true },
                 ),
-                currentData.size
+                currentData.size,
               );
 
               createEffect(
@@ -80,15 +78,15 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
 
                     return size;
                   },
-                  { defer: true }
+                  { defer: true },
                 ),
-                currentData.size
+                currentData.size,
               );
             }
-          }
-        )
+          },
+        ),
       );
-    })
+    }),
   );
 
   const size = () => data()?.size ?? 0;
@@ -97,10 +95,10 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
     <div
       {...{ [SOLID_PANEL_ATTRIBUTE_NAME]: true }}
       style={{
-        "flex-grow": size(),
-        "flex-shrink": 1,
-        "flex-basis": "0px",
-        overflow: "hidden",
+        'flex-grow': size(),
+        'flex-shrink': 1,
+        'flex-basis': '0px',
+        overflow: 'hidden',
       }}
     >
       {props.children}

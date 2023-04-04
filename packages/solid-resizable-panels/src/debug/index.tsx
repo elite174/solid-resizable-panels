@@ -1,12 +1,12 @@
-import { render } from "solid-js/web";
+import { render } from 'solid-js/web';
 
-import "../styles.css";
+import '../styles.css';
 
-import { PanelGroup } from "../PanelGroup";
-import { Panel } from "../Panel";
-import { ResizeHandle } from "../ResizeHandle";
+import { PanelGroup } from '../PanelGroup';
+import { Panel } from '../Panel';
+import { ResizeHandle } from '../ResizeHandle';
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css';
 
 const TestApp = () => {
   return (
@@ -18,4 +18,4 @@ const TestApp = () => {
   );
 };
 
-render(() => <TestApp />, document.getElementById("root")!);
+render(() => <TestApp />, document.getElementById('root')!);
