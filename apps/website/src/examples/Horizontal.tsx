@@ -1,6 +1,6 @@
 import type { VoidComponent } from "solid-js";
 import { Panel, PanelGroup, ResizeHandle } from "solid-resizable-panels";
-import "solid-resizable-panels/dist/styles.css";
+import "solid-resizable-panels/styles.css";
 
 export const Horizontal: VoidComponent = () => (
   <PanelGroup>
