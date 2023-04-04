@@ -18,6 +18,7 @@
   },
   "sideEffects": false,
   "scripts": {
+    "dev": "vite .",
     "build": "rollup -c rollup.config.js"
   },
   "repository": {

@@ -15,6 +15,7 @@ import type { Direction, LayoutItem } from "./types";
 import { PanelContext } from "./context";
 import type { IPanelContext } from "./context";
 import { preprocessLayout } from "./utils/preprocess-layout";
+import { CLASSNAMES } from "./constants";
 
 interface PanelGroupProps {
   direction?: Direction;
@@ -106,9 +107,9 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         ref={setContainerRef}
         component={props.tag}
         classList={{
-          ["solid-panel"]: true,
-          ["solid-panel_vertical"]: props.direction === "vertical",
-          ["solid-panel_reverse"]: Boolean(props.reverse),
+          [CLASSNAMES.panelGroup]: true,
+          [CLASSNAMES.panelGroupVertical]: props.direction === "vertical",
+          [CLASSNAMES.panelGroupReverse]: Boolean(props.reverse),
           [props.class ?? ""]: true,
         }}
       >

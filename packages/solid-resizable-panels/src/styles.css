@@ -1,20 +1,40 @@
-.solid-panel {
+.ResizeablePanelGroup {
   display: flex;
 }
 
-.solid-panel_vertical {
+.ResizeablePanelGroup_vertical {
   flex-direction: column;
 }
 
-.solid-panel_reverse {
+.ResizeablePanelGroup_reverse {
   flex-direction: row-reverse;
 }
 
-.solid-panel_vertical.solid-panel_reverse {
+.ResizeablePanelGroup_vertical.ResizeablePanelGroup_reverse {
   flex-direction: column-reverse;
 }
 
-.resize-handle {
+.ResizeablePanelGroup-ResizeHandle {
+  --size-px: 4px;
+
   flex-grow: 0;
   flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 8px;
+  background-color: #ccc;
+}
+
+.ResizeablePanelGroup .ResizeablePanelGroup-ResizeHandle {
+  width: var(--size-px);
+
+  cursor: ew-resize;
+}
+
+.ResizeablePanelGroup_vertical .ResizeablePanelGroup-ResizeHandle {
+  height: var(--size-px);
+  width: 100%;
+
+  cursor: ns-resize;
 }

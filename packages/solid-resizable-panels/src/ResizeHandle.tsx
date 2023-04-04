@@ -4,7 +4,7 @@ import { Dynamic } from "solid-js/web";
 
 import { PanelContext } from "./context";
 import { makeLogText } from "./utils/log";
-import { SOLID_PANEL_HANDLE_ATTRIBUTE_NAME } from "./constants";
+import { CLASSNAMES, SOLID_PANEL_HANDLE_ATTRIBUTE_NAME } from "./constants";
 
 interface ResizeHandleProps {
   tag?: string;
@@ -41,7 +41,10 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (
     <Dynamic
       {...{ [SOLID_PANEL_HANDLE_ATTRIBUTE_NAME]: true }}
       component={props.tag}
-      classList={{ "resize-handle": true, [props.class ?? ""]: true }}
+      classList={{
+        [CLASSNAMES.resizeHandle]: true,
+        [props.class ?? ""]: true,
+      }}
       onMouseDown={handleMouseDown}
     >
       {props.children}
