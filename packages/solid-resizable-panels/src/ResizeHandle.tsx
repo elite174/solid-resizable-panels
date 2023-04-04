@@ -29,7 +29,7 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (
 
   let panelId = "";
 
-  // ResizeHandle should be mounter right after Panel
+  // ResizeHandle should be mounted right after Panel
   // hmm, how to force users to do this...
   onMount(() => {
     panelId = context.getHandleId();

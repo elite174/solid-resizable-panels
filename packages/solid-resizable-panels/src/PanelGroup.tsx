@@ -16,12 +16,12 @@ import { PanelContext } from "./context";
 import type { IPanelContext } from "./context";
 import { preprocessLayout } from "./utils/preprocess-layout";
 import { CLASSNAMES } from "./constants";
+import { isHorizontalDirection } from "./utils/misc";
 
 interface PanelGroupProps {
   direction?: Direction;
   tag?: string;
   class?: string;
-  reverse?: boolean;
   zoom?: number;
   scale?: number;
 }
@@ -32,7 +32,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
       tag: "div",
       zoom: 1,
       scale: 1,
-      direction: "horizontal" as Direction,
+      direction: "row" as Direction,
       reverse: false,
     },
     initialProps
@@ -88,7 +88,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     scale: () => props.scale,
     direction: () => props.direction,
     state: () => state,
-    reverse: () => props.reverse,
     containerRef,
     onLayoutChange,
   });
@@ -106,10 +105,12 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
       <Dynamic
         ref={setContainerRef}
         component={props.tag}
+        style={{ "flex-direction": props.direction }}
         classList={{
           [CLASSNAMES.panelGroup]: true,
-          [CLASSNAMES.panelGroupVertical]: props.direction === "vertical",
-          [CLASSNAMES.panelGroupReverse]: Boolean(props.reverse),
+          [CLASSNAMES.panelGroupVertical]: !isHorizontalDirection(
+            props.direction
+          ),
           [props.class ?? ""]: true,
         }}
       >

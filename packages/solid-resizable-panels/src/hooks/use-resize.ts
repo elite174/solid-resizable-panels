@@ -6,12 +6,12 @@ import { roundTo4Digits } from "../utils/math";
 
 import { CorrectionAccessors, createMouseDelta } from "../utils/mouse-delta";
 import { useTotalPanelSizePX } from "./use-panel-size";
+import { isHorizontalDirection, isReverseDirection } from "../utils/misc";
 
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
   state: Accessor<SolidPanelStateAdapter["state"]>;
   onLayoutChange: SolidPanelStateAdapter["onLayoutChange"];
-  reverse: Accessor<boolean>;
   containerRef: Accessor<HTMLElement | undefined>;
 }
 
@@ -21,7 +21,6 @@ export const useResize = ({
   direction,
   onLayoutChange,
   state,
-  reverse,
   containerRef,
 }: Params) => {
   const mouseDelta = createMouseDelta({
@@ -61,8 +60,8 @@ export const useResize = ({
       document.addEventListener("mouseup", handleMouseUp, { once: true });
 
       // There things are not reactive during resize
-      const isHorizontal = direction() === "horizontal";
-      const reverseSign = reverse() ? -1 : 1;
+      const isHorizontal = isHorizontalDirection(direction());
+      const reverseSign = isReverseDirection(direction()) ? -1 : 1;
 
       const deltaPX = () =>
         (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) *

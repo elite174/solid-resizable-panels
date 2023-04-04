@@ -2,18 +2,6 @@
   display: flex;
 }
 
-.ResizeablePanelGroup_vertical {
-  flex-direction: column;
-}
-
-.ResizeablePanelGroup_reverse {
-  flex-direction: row-reverse;
-}
-
-.ResizeablePanelGroup_vertical.ResizeablePanelGroup_reverse {
-  flex-direction: column-reverse;
-}
-
 .ResizeablePanelGroup-ResizeHandle {
   --size-px: 4px;
 

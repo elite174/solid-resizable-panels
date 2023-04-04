@@ -10,7 +10,7 @@ import styles from "./styles.module.css";
 
 const TestApp = () => {
   return (
-    <PanelGroup class={styles.debug} direction="vertical">
+    <PanelGroup class={styles.debug} direction="column">
       <Panel id="1">hi!</Panel>
       <ResizeHandle />
       <Panel id="2">hi 2!</Panel>

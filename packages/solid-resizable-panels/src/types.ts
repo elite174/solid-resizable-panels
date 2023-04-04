@@ -1,5 +1,3 @@
-import { Accessor } from "solid-js";
-
 export type LayoutItem = {
   id: string;
   size?: number;
@@ -16,4 +14,4 @@ export interface ResolvedLayoutItem {
   collapsible: boolean;
 }
 
-export type Direction = "vertical" | "horizontal";
+export type Direction = "row" | "column" | "row-reverse" | "column-reverse";
