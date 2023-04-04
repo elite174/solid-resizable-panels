@@ -14,13 +14,13 @@
   background-color: #ccc;
 }
 
-.ResizeablePanelGroup .ResizeablePanelGroup-ResizeHandle {
+.ResizeablePanelGroup > .ResizeablePanelGroup-ResizeHandle {
   width: var(--size-px);
 
   cursor: ew-resize;
 }
 
-.ResizeablePanelGroup_vertical .ResizeablePanelGroup-ResizeHandle {
+.ResizeablePanelGroup_vertical > .ResizeablePanelGroup-ResizeHandle {
   height: var(--size-px);
   width: 100%;
 
