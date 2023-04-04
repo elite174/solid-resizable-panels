@@ -1,4 +1,5 @@
 import { Accessor, createEffect, createSignal, on, onCleanup } from 'solid-js';
+
 import { TOTAL_FLEX_GROW } from '../constants';
 import { SolidPanelStateAdapter } from '../store';
 import type { Direction } from '../types';
@@ -30,10 +31,10 @@ export const useResize = ({
 
   const [resizablePanelId, setResizablePanelId] = createSignal<string | undefined>(undefined);
 
-  const createMouseDownHandler = (id: Accessor<string>) => (e: MouseEvent) => {
+  const createMouseDownHandler = (id: string) => (e: MouseEvent) => {
     mouseDelta.init(e);
 
-    setResizablePanelId(id());
+    setResizablePanelId(id);
   };
 
   createEffect(

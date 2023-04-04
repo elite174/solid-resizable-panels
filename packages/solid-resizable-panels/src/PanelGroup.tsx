@@ -44,9 +44,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     setConfig(processedLayout());
   });
 
-  let lastRegisterPanelId = '';
-
-  const registerPanel: IPanelContext['registerPanel'] = (data, index) => {
+  const registerPanel: IPanelContext['registerPanel'] = (data, index) =>
     setInitialLayout(
       produce((layout) => {
         if (index) {
@@ -56,9 +54,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         }
       }),
     );
-
-    lastRegisterPanelId = data.id;
-  };
 
   const unregisterPanel: IPanelContext['unregisterPanel'] = (panelId) => {
     setInitialLayout(
@@ -70,8 +65,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
   const useData: IPanelContext['useData'] = (panelId) =>
     createMemo(() => state.layout.find((item) => item.id === panelId));
-
-  const getHandleId = () => lastRegisterPanelId;
 
   const createMouseDownHandler = useResize({
     zoom: () => props.zoom,
@@ -89,7 +82,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         unregisterPanel,
         useData,
         createMouseDownHandler,
-        getHandleId,
       }}
     >
       <Dynamic

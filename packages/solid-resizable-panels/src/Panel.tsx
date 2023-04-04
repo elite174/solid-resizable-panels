@@ -3,7 +3,7 @@ import { createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
 
 import { PanelContext } from './context';
 import { makeLogText } from './utils/log';
-import { SOLID_PANEL_ATTRIBUTE_NAME } from './constants';
+import { SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
 
 interface PanelProps {
   id: string;
@@ -89,13 +89,13 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
     }),
   );
 
-  const size = () => data()?.size ?? 0;
+  const flexGrow = () => data()?.size ?? 0;
 
   return (
     <div
-      {...{ [SOLID_PANEL_ATTRIBUTE_NAME]: true }}
+      {...{ [SOLID_PANEL_ID_ATTRIBUTE_NAME]: props.id }}
       style={{
-        'flex-grow': size(),
+        'flex-grow': flexGrow(),
         'flex-shrink': 1,
         'flex-basis': '0px',
         overflow: 'hidden',

@@ -1,7 +1,7 @@
 import { Accessor, createEffect, on } from 'solid-js';
 
-import { SOLID_PANEL_ATTRIBUTE_NAME } from '../constants';
-import { Direction } from '../types';
+import { SOLID_PANEL_ID_ATTRIBUTE_NAME } from '../constants';
+import type { Direction } from '../types';
 import { isHorizontalDirection } from '../utils/misc';
 
 const computeTotalPanelSizePX = (containerElement: HTMLElement, direction: Direction) => {
@@ -11,7 +11,7 @@ const computeTotalPanelSizePX = (containerElement: HTMLElement, direction: Direc
   const property = isHorizontalDirection(direction) ? 'width' : 'height';
 
   for (const item of containerElement.children) {
-    if (item.getAttribute(SOLID_PANEL_ATTRIBUTE_NAME))
+    if (item.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME))
       totalSizePX += item.getBoundingClientRect()[property];
   }
 

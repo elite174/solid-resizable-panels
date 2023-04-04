@@ -8,7 +8,6 @@ export interface IPanelContext {
   unregisterPanel: (panelId: string) => void;
   useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
   createMouseDownHandler: MouseDownHandlerCreator;
-  getHandleId: () => string;
 }
 
 export const PanelContext = createContext<IPanelContext>();

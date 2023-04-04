@@ -1,4 +1,4 @@
-export const SOLID_PANEL_ATTRIBUTE_NAME = 'data-resizable-panel-id';
+export const SOLID_PANEL_ID_ATTRIBUTE_NAME = 'data-resizable-panel-id';
 export const SOLID_PANEL_HANDLE_ATTRIBUTE_NAME = 'data-panel-resize-handle';
 
 export const TOTAL_FLEX_GROW = 100;

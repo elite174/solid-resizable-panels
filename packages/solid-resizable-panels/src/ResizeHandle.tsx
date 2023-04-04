@@ -1,10 +1,14 @@
 import type { ParentComponent } from 'solid-js';
-import { mergeProps, onMount, useContext } from 'solid-js';
+import { mergeProps, useContext } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
 import { PanelContext } from './context';
 import { makeLogText } from './utils/log';
-import { CLASSNAMES, SOLID_PANEL_HANDLE_ATTRIBUTE_NAME } from './constants';
+import {
+  CLASSNAMES,
+  SOLID_PANEL_ID_ATTRIBUTE_NAME,
+  SOLID_PANEL_HANDLE_ATTRIBUTE_NAME,
+} from './constants';
 
 interface ResizeHandleProps {
   tag?: string;
@@ -23,15 +27,16 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
     return null;
   }
 
-  let panelId = '';
+  const handleMouseDown = (e: MouseEvent) => {
+    const resizeHandleElement = e.currentTarget;
 
-  // ResizeHandle should be mounted right after Panel
-  // hmm, how to force users to do this...
-  onMount(() => {
-    panelId = context.getHandleId();
-  });
+    const panelId =
+      resizeHandleElement instanceof HTMLElement
+        ? resizeHandleElement.previousElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
+        : null;
 
-  const handleMouseDown = context.createMouseDownHandler(() => panelId);
+    if (panelId) context.createMouseDownHandler(panelId)(e);
+  };
 
   return (
     <Dynamic
