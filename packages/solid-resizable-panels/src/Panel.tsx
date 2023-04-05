@@ -1,23 +1,65 @@
-import type { ParentComponent } from 'solid-js';
+import { ParentComponent, mergeProps } from 'solid-js';
 import { createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 
 import { PanelContext } from './context';
 import { makeLogText } from './utils/log';
 import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
 
-interface PanelProps {
+export interface PanelProps {
   id: string;
+  /**
+   * Index of the panel within panel group.
+   * Should be passed when conditional panels used.
+   * @default undefined
+   */
   index?: number;
+  /**
+   * Rendered HTML tag
+   * @default "div"
+   */
+  tag?: string;
+  /**
+   * Size of the panel in percentage.
+   * @default computed according to layout
+   */
   size?: number;
+  /**
+   * Minimum size of the panel in percentage.
+   * @default 0
+   */
   minSize?: number;
+  /**
+   * Maximum size of the panel in percentage.
+   * @default 100
+   */
   maxSize?: number;
+  /**
+   * Is panel collapsible
+   * @default false
+   */
   collapsible?: boolean;
+  /**
+   * Extra class passed to panel DOM element.
+   */
   class?: string;
-  onCollapse?: () => void;
-  onExpand?: () => void;
+  /** A callback called when the panel becomes collapsed */
+  onCollapse?: VoidFunction;
+  /** A callback called when the panel becomes expanded */
+  onExpand?: VoidFunction;
 }
 
-export const Panel: ParentComponent<PanelProps> = (props) => {
+export const Panel: ParentComponent<PanelProps> = (initialProps) => {
+  const props = mergeProps(
+    {
+      tag: 'div',
+      minSize: 0,
+      maxSize: 100,
+      collapsible: false,
+    },
+    initialProps,
+  );
+
   const context = useContext(PanelContext);
 
   if (!context) {
@@ -30,12 +72,16 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
 
   const { registerPanel, unregisterPanel, useData } = context;
 
+  const data = useData(props.id);
+
+  const size = () => data()?.size;
+
   onMount(() => {
     const panelId = props.id;
 
     registerPanel(
       {
-        id: props.id,
+        id: panelId,
         size: props.size,
         minSize: props.minSize,
         maxSize: props.maxSize,
@@ -47,63 +93,47 @@ export const Panel: ParentComponent<PanelProps> = (props) => {
     onCleanup(() => unregisterPanel(panelId));
   });
 
-  const data = useData(props.id);
-
   createEffect(
-    on(data, (currentData) => {
-      if (!currentData) return;
+    on(
+      () => props.collapsible,
+      (isCollapsible) => {
+        if (!isCollapsible) return;
 
-      createEffect(
-        on(
-          () => props.collapsible,
-          (isCollapsible) => {
-            if (isCollapsible) {
-              createEffect(
-                on(
-                  () => currentData.size,
-                  (size, prevSize) => {
-                    if (size === 0 && prevSize !== 0) props.onCollapse?.();
+        createEffect(
+          on(
+            size,
+            (currentSize, previousSize) => {
+              if (currentSize === undefined || previousSize === undefined) return;
 
-                    return size;
-                  },
-                  { defer: true },
-                ),
-                currentData.size,
-              );
+              if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
 
-              createEffect(
-                on(
-                  () => currentData.size,
-                  (size, prevSize) => {
-                    if (size !== 0 && prevSize === 0) props.onExpand?.();
+              if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
 
-                    return size;
-                  },
-                  { defer: true },
-                ),
-                currentData.size,
-              );
-            }
-          },
-        ),
-      );
-    }),
+              return currentSize;
+            },
+            { defer: true },
+          ),
+          size(),
+        );
+      },
+    ),
   );
 
-  const flexGrow = () => data()?.size ?? 0;
-
+  // Actually we may not render this until the data is computed,
+  // however it would be not SSR friendly
   return (
-    <div
+    <Dynamic
       {...{ [SOLID_PANEL_ID_ATTRIBUTE_NAME]: props.id }}
+      component={props.tag}
       classList={{ [CLASSNAMES.panel]: true, [props.class ?? '']: true }}
       style={{
-        'flex-grow': flexGrow(),
+        'flex-grow': size(),
         'flex-shrink': 1,
         'flex-basis': '0px',
         overflow: 'hidden',
       }}
     >
       {props.children}
-    </div>
+    </Dynamic>
   );
 };
