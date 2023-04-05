@@ -1,18 +1,19 @@
-import { Accessor, createEffect, createSignal, on, onCleanup } from 'solid-js';
+import { Accessor } from 'solid-js';
+import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 
 import { TOTAL_FLEX_GROW } from '../constants';
-import { SolidPanelStateAdapter } from '../store';
-import type { Direction } from '../types';
-import { roundTo4Digits } from '../utils/math';
-
-import { CorrectionAccessors, createMouseDelta } from '../utils/mouse-delta';
+import { CreatePanelStore } from '../store';
 import { useTotalPanelSizePX } from './use-panel-size';
+import { roundTo4Digits } from '../utils/math';
+import { CorrectionAccessors, createMouseDelta } from '../utils/mouse-delta';
 import { isHorizontalDirection, isReverseDirection } from '../utils/direction';
+
+import type { Direction } from '../types';
 
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
-  state: Accessor<SolidPanelStateAdapter['state']>;
-  onLayoutChange: SolidPanelStateAdapter['onLayoutChange'];
+  state: Accessor<CreatePanelStore['state']>;
+  onLayoutChange: CreatePanelStore['onLayoutChange'];
   containerRef: Accessor<HTMLElement | undefined>;
 }
 

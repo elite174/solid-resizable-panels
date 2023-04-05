@@ -6,6 +6,17 @@ import { clamp, EPSILON, isZero, roundTo4Digits } from '../utils/math';
 const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
   Math.abs(newFlexGrow - initialFlexGrow);
 
+/**
+ * This function generates new panel state on every resize
+ * Actually this is an algorithm for resizing things
+ * It works in two phases:
+ * 1) Firstly we need to change the size of siblings from each side (and collapse them if necessary)
+ *    During this step we need to compute how much size we spent to change each size
+ * 2) Then we need to compare spent sizes
+ *    If they are equal it means that we don't need to do extra things and resize operation is correct
+ *    Otherwise it means that we can't resize one side more/less than another size
+ *    and we need to correct one side according to minimum spent size
+ */
 export const generateNewState = (
   resolvedLayout: ResolvedLayoutItem[],
   flexGrowOnResizeStart: number[],
@@ -260,4 +271,4 @@ export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
   };
 };
 
-export type SolidPanelStateAdapter = ReturnType<typeof createPanelStore>;
+export type CreatePanelStore = ReturnType<typeof createPanelStore>;
