@@ -96,53 +96,44 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
   });
 
   // Effect for calling onExpand and onCollapse callbacks
-  createEffect(
-    on(
-      () => props.collapsible,
-      (isCollapsible) => {
-        if (!isCollapsible) return;
+  createEffect(() => {
+    if (!props.collapsible) return;
 
-        createEffect(
-          on(
-            size,
-            (currentSize, previousSize) => {
-              if (currentSize === undefined || previousSize === undefined) return;
+    createEffect(
+      on(
+        size,
+        (currentSize, previousSize) => {
+          if (currentSize === undefined || previousSize === undefined) return;
 
-              if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
+          if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
 
-              if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
+          if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
 
-              return currentSize;
-            },
-            { defer: true },
-          ),
-          size(),
-        );
-      },
-    ),
-  );
+          return currentSize;
+        },
+        { defer: true },
+      ),
+      size(),
+    );
+  });
 
   // Calling onResize callback
-  createEffect(
-    on(
-      () => props.onResize,
-      (onResize) => {
-        if (!onResize) return;
+  createEffect(() => {
+    const onResize = props.onResize;
 
-        // I like how it's easy to make nested effects in solid
-        // * If you have an onResize callback then start track size accessor *
-        createEffect(
-          on(
-            size,
-            (currentSize) => {
-              if (currentSize !== undefined) onResize(currentSize);
-            },
-            { defer: true },
-          ),
-        );
-      },
-    ),
-  );
+    if (onResize)
+      // I like how it's easy to make nested effects in solid
+      // * If you have an onResize callback then start track size accessor *
+      createEffect(
+        on(
+          size,
+          (currentSize) => {
+            if (currentSize !== undefined) onResize(currentSize);
+          },
+          { defer: true },
+        ),
+      );
+  });
 
   // Actually we may not render this until the data is computed,
   // however it would be not SSR friendly
