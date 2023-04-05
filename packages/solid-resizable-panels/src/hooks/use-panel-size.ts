@@ -1,23 +1,28 @@
-import { Accessor, createEffect, on } from 'solid-js';
+import type { Accessor } from 'solid-js';
+import { createEffect, createMemo, on } from 'solid-js';
 
 import { SOLID_PANEL_ID_ATTRIBUTE_NAME } from '../constants';
-import type { Direction } from '../types';
 import { isHorizontalDirection } from '../utils/direction';
 
-const computeTotalPanelSizePX = (containerElement: HTMLElement, direction: Direction) => {
-  let totalSizePX = 0;
+import type { Direction } from '../types';
 
-  // TODO move this thing out of this function
-  const property = isHorizontalDirection(direction) ? 'width' : 'height';
+const computeTotalPanelSizePX = (
+  containerElement: HTMLElement,
+  domRectProperty: 'width' | 'height',
+) => {
+  let totalSizePX = 0;
 
   for (const item of containerElement.children) {
     if (item.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME))
-      totalSizePX += item.getBoundingClientRect()[property];
+      totalSizePX += item.getBoundingClientRect()[domRectProperty];
   }
 
   return totalSizePX;
 };
 
+/**
+ * Returns an accessor with cumulative panels width in px
+ */
 export const useTotalPanelSizePX = (
   container: Accessor<HTMLElement | undefined>,
   panelCount: Accessor<number>,
@@ -25,16 +30,20 @@ export const useTotalPanelSizePX = (
 ) => {
   let totalPanelSizePX = 0;
 
+  const domRectProperty = createMemo(() =>
+    isHorizontalDirection(direction()) ? 'width' : 'height',
+  );
+
   createEffect(
     on(
       // we also need to track panel count to invalidate size
-      [container, direction, panelCount],
-      ([containerElement, currentDirection]) => {
+      [container, domRectProperty, panelCount],
+      ([containerElement, currentDOMRectProperty]) => {
         if (containerElement) {
           totalPanelSizePX = computeTotalPanelSizePX(
             containerElement,
-            // direction here will cause an effect rerun
-            currentDirection,
+            // changing direction here will cause an effect rerun
+            currentDOMRectProperty,
           );
         }
       },
