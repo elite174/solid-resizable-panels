@@ -14,7 +14,7 @@
     "astro": "^2.1.9",
     "prismjs": "^1.29.0",
     "solid-js": "^1.7.1",
-    "solid-resizable-panels": "^0.1.0",
+    "solid-resizable-panels": "^0.1.1",
     "tailwindcss": "^3.0.24"
   },
   "devDependencies": {
