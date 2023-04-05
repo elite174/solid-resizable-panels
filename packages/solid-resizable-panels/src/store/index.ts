@@ -44,7 +44,7 @@ export const generateNewState = (
 
         // If we can collapse an item
         // Do this
-        if (resolvedLayout[i]) {
+        if (resolvedLayout[i].collapsible) {
           if (resolvedLayout[i].minSize < remainingDeltaSizeLeftAbs) {
             updatedFlexGrowValues[i] = 0;
 
