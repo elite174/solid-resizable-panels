@@ -7,7 +7,7 @@ import { roundTo4Digits } from '../utils/math';
 
 import { CorrectionAccessors, createMouseDelta } from '../utils/mouse-delta';
 import { useTotalPanelSizePX } from './use-panel-size';
-import { isHorizontalDirection, isReverseDirection } from '../utils/misc';
+import { isHorizontalDirection, isReverseDirection } from '../utils/direction';
 
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;

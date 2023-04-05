@@ -2,7 +2,7 @@ import { Accessor, createEffect, on } from 'solid-js';
 
 import { SOLID_PANEL_ID_ATTRIBUTE_NAME } from '../constants';
 import type { Direction } from '../types';
-import { isHorizontalDirection } from '../utils/misc';
+import { isHorizontalDirection } from '../utils/direction';
 
 const computeTotalPanelSizePX = (containerElement: HTMLElement, direction: Direction) => {
   let totalSizePX = 0;

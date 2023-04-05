@@ -1,4 +1,5 @@
-import { mergeProps, ParentComponent, createMemo, createSignal, createComputed } from 'solid-js';
+import type { ParentComponent } from 'solid-js';
+import { mergeProps, createMemo, createSignal, createComputed } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { Dynamic } from 'solid-js/web';
 
@@ -10,14 +11,35 @@ import { PanelContext } from './context';
 import type { IPanelContext } from './context';
 import { preprocessLayout } from './utils/preprocess-layout';
 import { CLASSNAMES } from './constants';
-import { isHorizontalDirection } from './utils/misc';
+import { isHorizontalDirection } from './utils/direction';
 
-interface PanelGroupProps {
+export interface PanelGroupProps {
+  /**
+   * A flex-direction property applied to the element
+   * @default "row"
+   */
   direction?: Direction;
-  tag?: string;
-  class?: string;
+  /**
+   * If the parent element has CSS zoom property
+   * The zoom value should be passed to eliminate visual bugs during resizing
+   * @default 1
+   */
   zoom?: number;
+  /**
+   * If the parent element has CSS scale property
+   * The scale value should be passed to eliminate visual bugs during resizing
+   * @default 1
+   */
   scale?: number;
+  /**
+   * Rendered HTML tag
+   * @default "div"
+   */
+  tag?: string;
+  /**
+   * Extra class passed to panel DOM element.
+   */
+  class?: string;
 }
 
 export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
@@ -27,7 +49,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
       zoom: 1,
       scale: 1,
       direction: 'row' as Direction,
-      reverse: false,
     },
     initialProps,
   );

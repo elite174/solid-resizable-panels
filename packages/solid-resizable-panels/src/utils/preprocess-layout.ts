@@ -21,9 +21,9 @@ export const preprocessLayout = (layout: LayoutItem[]): ResolvedLayoutItem[] => 
     const resolvedItem = {
       id: item.id,
       size: item.size ?? remainingFlexGrowPerItem,
-      minSize: item.minSize ?? 0,
-      maxSize: item.maxSize ?? Infinity,
-      collapsible: Boolean(item.collapsible),
+      minSize: item.minSize,
+      maxSize: item.maxSize,
+      collapsible: item.collapsible,
     };
 
     const errorMinSize = resolvedItem.size < resolvedItem.minSize;
