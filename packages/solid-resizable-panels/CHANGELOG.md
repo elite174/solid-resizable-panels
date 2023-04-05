@@ -9,3 +9,7 @@
 
 - Supported `onResize` callback for `Panel`
 - Supported `onLayoutChange` callback for `PanelGroup`
+
+# 0.3.1
+
+- Fixed collapse bug (items collapsed from the left side)
