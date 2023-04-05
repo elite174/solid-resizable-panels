@@ -1,3 +1,3 @@
 # Solid-resizable-panels docs site
 
-WIP
+[Docs](https://solid-resizable-panels.vercel.app/) for `solid-resizable-panels` package.

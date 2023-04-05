@@ -4,7 +4,6 @@ import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 import { TOTAL_FLEX_GROW } from '../constants';
 import { CreatePanelStore } from '../store';
 import { useTotalPanelSizePX } from './use-panel-size';
-import { roundTo4Digits } from '../utils/math';
 import { CorrectionAccessors, createMouseDelta } from '../utils/mouse-delta';
 import { isHorizontalDirection, isReverseDirection } from '../utils/direction';
 
@@ -66,9 +65,7 @@ export const useResize = ({
 
       createEffect(
         on(deltaPX, (currentDeltaPX) => {
-          const deltaFlexGrow = roundTo4Digits(
-            (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX(),
-          );
+          const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
 
           if (deltaFlexGrow !== 0) onLayoutChange(deltaFlexGrow, panelId, flexGrowOnResizeStart);
         }),

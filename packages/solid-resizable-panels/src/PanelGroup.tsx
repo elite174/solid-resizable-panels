@@ -1,4 +1,4 @@
-import type { ParentComponent } from 'solid-js';
+import { ParentComponent, onMount } from 'solid-js';
 import { mergeProps, createMemo, createSignal, createComputed } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { Dynamic } from 'solid-js/web';
@@ -96,6 +96,16 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     onLayoutChange,
   });
 
+  const [isContentVisible, setContentVisible] = createSignal(false);
+
+  // Removed flickering (when SSR)
+  // The point is that initial sizes are not defined
+  // So we need to mount elements and then compute their sizes
+  // This causes flickering so we need to show the content only after mount
+  onMount(() => setContentVisible(true));
+
+  const contentVisibility = () => (isContentVisible() ? '' : 'hidden');
+
   return (
     <PanelContext.Provider
       value={{
@@ -108,7 +118,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
       <Dynamic
         ref={setContainerRef}
         component={props.tag}
-        style={{ 'flex-direction': props.direction }}
+        style={{ 'flex-direction': props.direction, visibility: contentVisibility() }}
         classList={{
           [CLASSNAMES.panelGroup]: true,
           [CLASSNAMES.panelGroupVertical]: !isHorizontalDirection(props.direction),

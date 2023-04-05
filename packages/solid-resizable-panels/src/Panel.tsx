@@ -93,6 +93,7 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
     onCleanup(() => unregisterPanel(panelId));
   });
 
+  // Effect for calling onExpand and onCollapse callbacks
   createEffect(
     on(
       () => props.collapsible,

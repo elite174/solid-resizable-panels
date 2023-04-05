@@ -10,7 +10,7 @@ import styles from './styles.module.css';
 
 const TestApp = () => {
   return (
-    <PanelGroup class={styles.debug} direction="column">
+    <PanelGroup class={styles.debug} direction="row-reverse">
       <Panel
         id="1"
         collapsible
