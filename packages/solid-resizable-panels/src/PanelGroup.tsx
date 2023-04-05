@@ -40,6 +40,10 @@ export interface PanelGroupProps {
    * Extra class passed to panel DOM element.
    */
   class?: string;
+  /**
+   * A callback called during resize
+   */
+  onLayoutChange?: (sizes: number[]) => void;
 }
 
 export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
@@ -59,7 +63,10 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
   const processedLayout = createMemo(() => preprocessLayout(initialLayout));
 
-  const { state, setConfig, onLayoutChange } = createPanelStore(processedLayout());
+  const { state, setConfig, updateLayout } = createPanelStore(
+    processedLayout(),
+    props.onLayoutChange,
+  );
 
   createComputed(() => {
     setConfig(processedLayout());
@@ -93,7 +100,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     direction: () => props.direction,
     state: () => state,
     containerRef,
-    onLayoutChange,
+    updateLayout,
   });
 
   const [isContentVisible, setContentVisible] = createSignal(false);

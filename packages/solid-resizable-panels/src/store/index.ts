@@ -235,13 +235,16 @@ export const generateNewState = (
   return updatedFlexGrowValues;
 };
 
-export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
+export const createPanelStore = (
+  resolvedLayout: ResolvedLayoutItem[],
+  onLayoutChange?: (sizes: number[]) => void,
+) => {
   const [state, setState] = createStore({ layout: resolvedLayout }, { name: 'PanelStore' });
 
   const setConfig = (resolvedLayout: ResolvedLayoutItem[]) =>
     setState('layout', reconcile(resolvedLayout));
 
-  const onLayoutChange = (deltaSize: number, panelId: string, flexGrowOnResizeStart: number[]) => {
+  const updateLayout = (deltaSize: number, panelId: string, flexGrowOnResizeStart: number[]) => {
     const resizableItemIndex = state.layout.findIndex((item) => item.id === panelId);
 
     // TODO handle error somehow
@@ -252,22 +255,25 @@ export const createPanelStore = (resolvedLayout: ResolvedLayoutItem[]) => {
       flexGrowOnResizeStart,
       resizableItemIndex,
       deltaSize,
-    );
+      // round values
+    ).map(roundTo4Digits);
 
     setState(
       produce((s) => {
         for (let i = 0; i < newState.length; i++) {
           // hate TS for this
-          if (newState[i] !== undefined) s.layout[i].size = roundTo4Digits(newState[i]!);
+          if (newState[i] !== undefined) s.layout[i].size = newState[i]!;
         }
       }),
     );
+
+    onLayoutChange?.(newState);
   };
 
   return {
     state,
     setConfig,
-    onLayoutChange,
+    updateLayout,
   };
 };
 

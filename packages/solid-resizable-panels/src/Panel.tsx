@@ -47,6 +47,8 @@ export interface PanelProps {
   onCollapse?: VoidFunction;
   /** A callback called when the panel becomes expanded */
   onExpand?: VoidFunction;
+  /** A callback called when size changes */
+  onResize?: (newSize: number) => void;
 }
 
 export const Panel: ParentComponent<PanelProps> = (initialProps) => {
@@ -115,6 +117,28 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
             { defer: true },
           ),
           size(),
+        );
+      },
+    ),
+  );
+
+  // Calling onResize callback
+  createEffect(
+    on(
+      () => props.onResize,
+      (onResize) => {
+        if (!onResize) return;
+
+        // I like how it's easy to make nested effects in solid
+        // * If you have an onResize callback then start track size accessor *
+        createEffect(
+          on(
+            size,
+            (currentSize) => {
+              if (currentSize !== undefined) onResize(currentSize);
+            },
+            { defer: true },
+          ),
         );
       },
     ),

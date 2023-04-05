@@ -10,7 +10,7 @@ import styles from './styles.module.css';
 
 const TestApp = () => {
   return (
-    <PanelGroup class={styles.debug} direction="row-reverse">
+    <PanelGroup class={styles.debug} direction="row-reverse" onLayoutChange={console.log}>
       <Panel
         id="1"
         initialSize={30}
@@ -21,7 +21,9 @@ const TestApp = () => {
         hi!
       </Panel>
       <ResizeHandle />
-      <Panel id="2">hi 2!</Panel>
+      <Panel id="2" onResize={(size) => console.log('resize', size)}>
+        hi 2!
+      </Panel>
     </PanelGroup>
   );
 };

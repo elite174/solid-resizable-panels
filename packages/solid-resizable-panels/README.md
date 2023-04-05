@@ -62,6 +62,10 @@ export interface PanelGroupProps {
    * Extra class passed to panel DOM element.
    */
   class?: string;
+  /**
+   * A callback called during resize
+   */
+  onLayoutChange?: (sizes: number[]) => void;
 }
 ```
 
@@ -109,6 +113,8 @@ export interface PanelProps {
   onCollapse?: VoidFunction;
   /** A callback called when the panel becomes expanded */
   onExpand?: VoidFunction;
+  /** A callback called when size changes */
+  onResize?: (newSize: number) => void;
 }
 ```
 

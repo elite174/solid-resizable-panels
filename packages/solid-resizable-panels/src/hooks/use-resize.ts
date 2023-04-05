@@ -12,7 +12,7 @@ import type { Direction } from '../types';
 interface Params extends CorrectionAccessors {
   direction: Accessor<Direction>;
   state: Accessor<CreatePanelStore['state']>;
-  onLayoutChange: CreatePanelStore['onLayoutChange'];
+  updateLayout: CreatePanelStore['updateLayout'];
   containerRef: Accessor<HTMLElement | undefined>;
 }
 
@@ -20,7 +20,7 @@ export const useResize = ({
   zoom,
   scale,
   direction,
-  onLayoutChange,
+  updateLayout,
   state,
   containerRef,
 }: Params) => {
@@ -67,7 +67,7 @@ export const useResize = ({
         on(deltaPX, (currentDeltaPX) => {
           const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
 
-          if (deltaFlexGrow !== 0) onLayoutChange(deltaFlexGrow, panelId, flexGrowOnResizeStart);
+          if (deltaFlexGrow !== 0) updateLayout(deltaFlexGrow, panelId, flexGrowOnResizeStart);
         }),
       );
 
