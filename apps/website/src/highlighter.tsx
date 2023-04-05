@@ -9,7 +9,7 @@ interface Props {
 
 export const Highlighter: VoidComponent<Props> = (props) => {
   return (
-    <pre class="bg-slate-900 p-2 rounded overflow-hidden">
+    <pre class="bg-slate-900 p-2 rounded overflow-auto text-small">
       <code
         class="language-jsx"
         data-dependencies="jsx"

@@ -22,6 +22,23 @@ const examples: ExampleItem[] = [
 ];
 ---
 
+<style is:global>
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+
+    background-color: #aaa;
+  }
+</style>
+
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -59,15 +76,17 @@ const examples: ExampleItem[] = [
           Object.values(examples).map((item: ExampleItem) => (
             <li class="h-full snap-center">
               <section
-                class="grid grid-cols-[1fr] grid-rows-[auto_1fr_auto] gap-4 h-full py-2"
+                class="grid grid-cols-[1fr_1fr] grid-rows-[1fr] gap-4 h-full py-2"
                 id={item.example}
               >
-                <h2 class="bold text-xl">{item.title}</h2>
-                <div class="rounded overflow-hidden">
-                  <Examples example={item.example} client:visible />
+                <div class="h-full grid grid-rows-[auto_1fr] grid-cols-[1fr] gap-4">
+                  <h2 class="bold text-xl">{item.title}</h2>
+                  <div class="rounded overflow-hidden">
+                    <Examples example={item.example} client:visible />
+                  </div>
                 </div>
-                <section class="flex flex-col gap-2">
-                  <h3 class="text-xl bold text-gray-500">The code:</h3>
+                <section class="flex flex-col gap-4 overflow-hidden">
+                  <h3 class="text-xl bold">The code:</h3>
                   <Highlighter text={codeMap[item.example]} />
                 </section>
               </section>

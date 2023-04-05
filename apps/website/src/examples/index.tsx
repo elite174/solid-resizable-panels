@@ -16,11 +16,18 @@ const examples = {
 
 export type Example = keyof typeof examples;
 
+const withImports = (
+  code: string,
+) => `import {PanelGroup, Panel, ResizeHandle} from 'solid-resizable-panels;
+import 'solid-resizable-panels/styles.css';
+
+${code}`;
+
 export const codeMap: Record<Example, string> = {
-  collapsible: collapsibleCode,
-  horizontal: horizontalCode,
-  nested: nestedCode,
-  vertical: verticalCode,
+  collapsible: withImports(collapsibleCode),
+  horizontal: withImports(horizontalCode),
+  nested: withImports(nestedCode),
+  vertical: withImports(verticalCode),
 };
 
 interface Props {
