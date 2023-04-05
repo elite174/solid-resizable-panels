@@ -10,8 +10,15 @@ import {
   SOLID_PANEL_HANDLE_ATTRIBUTE_NAME,
 } from './constants';
 
-interface ResizeHandleProps {
+export interface ResizeHandleProps {
+  /**
+   * Rendered HTML tag
+   * @default "button"
+   */
   tag?: string;
+  /**
+   * Extra class passed to panel DOM element.
+   */
   class?: string;
 }
 
@@ -30,6 +37,7 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
   const handleMouseDown = (e: MouseEvent) => {
     const resizeHandleElement = e.currentTarget;
 
+    // find resizable panel dynamically
     const panelId =
       resizeHandleElement instanceof HTMLElement
         ? resizeHandleElement.previousElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
