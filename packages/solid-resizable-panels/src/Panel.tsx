@@ -20,17 +20,17 @@ export interface PanelProps {
    */
   tag?: string;
   /**
-   * Size of the panel in percentage.
+   * Initial size of the panel in percent.
    * @default computed according to layout
    */
-  size?: number;
+  initialSize?: number;
   /**
-   * Minimum size of the panel in percentage.
+   * Minimum size of the panel in percent.
    * @default 0
    */
   minSize?: number;
   /**
-   * Maximum size of the panel in percentage.
+   * Maximum size of the panel in percent.
    * @default 100
    */
   maxSize?: number;
@@ -82,7 +82,7 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
     registerPanel(
       {
         id: panelId,
-        size: props.size,
+        size: props.initialSize,
         minSize: props.minSize,
         maxSize: props.maxSize,
         collapsible: props.collapsible,

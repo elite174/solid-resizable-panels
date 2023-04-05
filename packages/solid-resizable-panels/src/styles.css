@@ -16,15 +16,25 @@
   background-color: #ccc;
 }
 
+.ResizeablePanelGroup-ResizeHandle_disabled {
+  cursor: not-allowed;
+}
+
 .ResizeablePanelGroup > .ResizeablePanelGroup-ResizeHandle {
   width: var(--size-px);
+}
 
+.ResizeablePanelGroup
+  > .ResizeablePanelGroup-ResizeHandle:not(.ResizeablePanelGroup-ResizeHandle_disabled) {
   cursor: ew-resize;
 }
 
 .ResizeablePanelGroup_vertical > .ResizeablePanelGroup-ResizeHandle {
   height: var(--size-px);
   width: 100%;
+}
 
+.ResizeablePanelGroup_vertical
+  > .ResizeablePanelGroup-ResizeHandle:not(.ResizeablePanelGroup-ResizeHandle_disabled) {
   cursor: ns-resize;
 }

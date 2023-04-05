@@ -82,17 +82,17 @@ export interface PanelProps {
    */
   tag?: string;
   /**
-   * Size of the panel in percentage.
+   * Initial size of the panel in percent.
    * @default computed according to layout
    */
-  size?: number;
+  initialSize?: number;
   /**
-   * Minimum size of the panel in percentage.
+   * Minimum size of the panel in percent.
    * @default 0
    */
   minSize?: number;
   /**
-   * Maximum size of the panel in percentage.
+   * Maximum size of the panel in percent.
    * @default 100
    */
   maxSize?: number;
@@ -116,6 +116,11 @@ export interface PanelProps {
 
 ```ts
 export interface ResizeHandleProps {
+  /**
+   * Disables the handle
+   * @default false
+   */
+  disabled?: boolean;
   /**
    * Rendered HTML tag
    * @default "button"

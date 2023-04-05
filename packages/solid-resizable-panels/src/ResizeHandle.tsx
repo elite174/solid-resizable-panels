@@ -12,6 +12,11 @@ import {
 
 export interface ResizeHandleProps {
   /**
+   * Disables the handle
+   * @default false
+   */
+  disabled?: boolean;
+  /**
    * Rendered HTML tag
    * @default "button"
    */
@@ -23,7 +28,7 @@ export interface ResizeHandleProps {
 }
 
 export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) => {
-  const props = mergeProps({ tag: 'button' }, initialProps);
+  const props = mergeProps({ tag: 'button', disabled: false }, initialProps);
   const context = useContext(PanelContext);
 
   if (!context) {
@@ -35,6 +40,8 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
   }
 
   const handleMouseDown = (e: MouseEvent) => {
+    if (props.disabled) return;
+
     const resizeHandleElement = e.currentTarget;
 
     // find resizable panel dynamically
@@ -50,8 +57,10 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
     <Dynamic
       {...{ [SOLID_PANEL_HANDLE_ATTRIBUTE_NAME]: true }}
       component={props.tag}
+      disabled={props.disabled}
       classList={{
         [CLASSNAMES.resizeHandle]: true,
+        [CLASSNAMES.resizeHandleDisabled]: props.disabled,
         [props.class ?? '']: true,
       }}
       onMouseDown={handleMouseDown}

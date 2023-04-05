@@ -2,5 +2,7 @@
 - Improve errors
 - Support custom resize algorithm
 - Support persistent layout (especially for conditional panels)
+- Support onLayoutChange
+- Support onResize
 
 - Stop resize on direction change?

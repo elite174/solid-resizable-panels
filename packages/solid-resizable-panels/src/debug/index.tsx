@@ -13,6 +13,7 @@ const TestApp = () => {
     <PanelGroup class={styles.debug} direction="row-reverse">
       <Panel
         id="1"
+        initialSize={30}
         collapsible
         onCollapse={() => console.log('collapsed')}
         onExpand={() => console.log('expanded')}
