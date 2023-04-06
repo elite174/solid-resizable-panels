@@ -1,6 +1,5 @@
 - Add errors for the same panel ids
 - Improve errors
-- Support custom resize algorithm
 - Support persistent layout (especially for conditional panels)
 - Support imperative API
 

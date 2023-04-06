@@ -1,4 +1,6 @@
 import { createStore, produce, reconcile } from 'solid-js/store';
+import type { Accessor } from 'solid-js';
+import { createMemo, untrack } from 'solid-js';
 
 import type { ResolvedLayoutItem } from '../types';
 import { clamp, EPSILON, isZero, roundTo4Digits } from '../utils/math';
@@ -235,8 +237,11 @@ export const generateNewState = (
   return updatedFlexGrowValues;
 };
 
+export type ResizeAlgorithm = typeof generateNewState;
+
 export const createPanelStore = (
   resolvedLayout: ResolvedLayoutItem[],
+  resizeAlgorithm: Accessor<ResizeAlgorithm | undefined>,
   onLayoutChange?: (sizes: number[]) => void,
 ) => {
   const [state, setState] = createStore({ layout: resolvedLayout }, { name: 'PanelStore' });
@@ -244,13 +249,15 @@ export const createPanelStore = (
   const setConfig = (resolvedLayout: ResolvedLayoutItem[]) =>
     setState('layout', reconcile(resolvedLayout));
 
+  const generateNewStateAlgorithm = createMemo(() => resizeAlgorithm() ?? generateNewState);
+
   const updateLayout = (deltaSize: number, panelId: string, flexGrowOnResizeStart: number[]) => {
     const resizableItemIndex = state.layout.findIndex((item) => item.id === panelId);
 
     // TODO handle error somehow
     if (resizableItemIndex === -1) return;
 
-    const newState = generateNewState(
+    const newState = untrack(generateNewStateAlgorithm)(
       state.layout,
       flexGrowOnResizeStart,
       resizableItemIndex,
