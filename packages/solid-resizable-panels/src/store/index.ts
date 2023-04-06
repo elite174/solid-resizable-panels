@@ -4,6 +4,7 @@ import { createMemo, untrack } from 'solid-js';
 
 import type { ResolvedLayoutItem } from '../types';
 import { clamp, EPSILON, isZero, roundTo4Digits } from '../utils/math';
+import { TOTAL_FLEX_GROW } from '../constants';
 
 const computeSpentFlexGrow = (newFlexGrow: number, initialFlexGrow: number) =>
   Math.abs(newFlexGrow - initialFlexGrow);
@@ -28,11 +29,15 @@ export const generateNewState = (
   const updatedFlexGrowValues: number[] = new Array(flexGrowOnResizeStart.length);
   const deltaSizeAbs = Math.abs(deltaSize);
 
+  const resizeDirection = Math.sign(deltaSize) < 0 ? 'left' : 'right';
+
   let remainingDeltaSizeLeftAbs = deltaSizeAbs;
   let revealedDeltaSizeLeft = 0;
   let spentDeltaSizeLeft = 0;
 
-  const resizeDirection = Math.sign(deltaSize) < 0 ? 'left' : 'right';
+  let remainingDeltaSizeRightAbs = deltaSizeAbs;
+  let revealedDeltaSizeRight = 0;
+  let spentDeltaSizeRight = 0;
 
   const tryToCollapseLeftSide = () => {
     // Now if we have some budget
@@ -51,6 +56,7 @@ export const generateNewState = (
             updatedFlexGrowValues[i] = 0;
 
             remainingDeltaSizeLeftAbs -= resolvedLayout[i].minSize;
+            spentDeltaSizeLeft += resolvedLayout[i].minSize;
             // Don't need to iterate further because we don't have enough budget to collapse nearest item
           } else break;
         }
@@ -75,6 +81,7 @@ export const generateNewState = (
             updatedFlexGrowValues[i] = 0;
 
             remainingDeltaSizeRightAbs -= resolvedLayout[i].minSize;
+            spentDeltaSizeRight += resolvedLayout[i].minSize;
             // Don't need to iterate further because we don't have enough budget to collapse nearest item
           } else break;
         }
@@ -122,10 +129,6 @@ export const generateNewState = (
 
   tryToCollapseLeftSide();
 
-  let remainingDeltaSizeRightAbs = deltaSizeAbs;
-  let revealedDeltaSizeRight = 0;
-  let spentDeltaSizeRight = 0;
-
   // Now try to change right side
   for (let i = resizableItemIndex + 1; i < resolvedLayout.length; i++) {
     const initialFlexGrow = flexGrowOnResizeStart[i];
@@ -161,8 +164,8 @@ export const generateNewState = (
 
   tryToCollapseRightSide();
 
-  spentDeltaSizeLeft = clamp(spentDeltaSizeLeft - revealedDeltaSizeLeft, 0, Infinity);
-  spentDeltaSizeRight = clamp(spentDeltaSizeRight - revealedDeltaSizeRight, 0, Infinity);
+  spentDeltaSizeLeft = clamp(spentDeltaSizeLeft - revealedDeltaSizeLeft, 0, TOTAL_FLEX_GROW);
+  spentDeltaSizeRight = clamp(spentDeltaSizeRight - revealedDeltaSizeRight, 0, TOTAL_FLEX_GROW);
 
   // here we need to correct left side
   // because we can't resize it more than right side
