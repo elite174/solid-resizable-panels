@@ -50,7 +50,13 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
         ? resizeHandleElement.previousElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
         : null;
 
-    if (panelId) context.createMouseDownHandler(panelId)(e);
+    // check that we have panels from both sides
+    const nextPanelId =
+      resizeHandleElement instanceof HTMLElement
+        ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
+        : null;
+
+    if (panelId && nextPanelId) context.createMouseDownHandler(panelId)(e);
   };
 
   return (

@@ -22,7 +22,7 @@ const TestApp = () => {
         hi!
       </Panel>
       <ResizeHandle />
-      <Panel id="2" minSize={20} collapsible>
+      <Panel id="2" minSize={20} maxSize={70} collapsible>
         hi 2!
       </Panel>
       <ResizeHandle />
