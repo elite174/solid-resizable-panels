@@ -66,6 +66,30 @@ export interface PanelGroupProps {
    * A callback called during resize
    */
   onLayoutChange?: (sizes: number[]) => void;
+  /**
+   * You can pass custom resize algorithm and implemenent custom resize logic
+   * This algorithm is called every time on items resize (mousemove or touchmove)
+   * So it should return the final state of the items
+   *
+   * @returns The sizes of the items on the current resize event (mousemove or touchmove)
+   */
+  resizeAlgorithm?: (
+    /** Current state of layout */
+    resolvedLayout: {
+      id: string;
+      size: number;
+      minSize: number;
+      maxSize: number;
+      collapsible: boolean;
+    }[],
+    /** Sizes on resize start */
+    sizesOnResizeStart: number[],
+    resizableItemIndex: number,
+    /**
+     * Delta size is computed from the initial size (before resize) and current state
+     */
+    deltaSize: number,
+  ) => number[];
 }
 ```
 

@@ -13,3 +13,9 @@
 # 0.3.1
 
 - Fixed collapse bug (items collapsed from the left side)
+
+# 0.4.0
+
+- Supported custom resize algorithm
+- Rewritten resizing algorithm
+- Fixed some bugs
