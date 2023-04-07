@@ -4,22 +4,20 @@ import { EPSILON, clamp, isZero } from '../utils/math';
 // TODO refactor this and add tests
 export const newStateAlgorithm = (
   resolvedLayout: ResolvedLayoutItem[],
-  flexGrowOnResizeStart: number[],
+  sizesOnResizeStart: number[],
   resizableItemIndex: number,
   deltaSize: number,
 ): number[] => {
-  let result = flexGrowOnResizeStart.slice();
-  let resizeDirection = Math.sign(deltaSize) === 1 ? 'right' : 'left';
-  let totalBudget = Math.abs(deltaSize);
-  const sign = resizeDirection === 'left' ? -1 : 1;
+  let updatedSizes = sizesOnResizeStart.slice();
+  const resizeDirection = Math.sign(deltaSize) === 1 ? 'right' : 'left';
+  const totalBudget = Math.abs(deltaSize);
+  const sign = (resizeDirection === 'left' ? -1 : 1) * Math.sign(deltaSize);
 
   const itemCount = resolvedLayout.length;
 
   // try to enlarge nearest item from the opposite side
   const nextItemIndex = resizeDirection === 'left' ? resizableItemIndex + 1 : resizableItemIndex;
-  // minus because it's right
-  const nextItemVirtualSize =
-    flexGrowOnResizeStart[nextItemIndex] + sign * Math.sign(deltaSize) * totalBudget;
+  const nextItemVirtualSize = sizesOnResizeStart[nextItemIndex] + sign * totalBudget;
   const nextItemActualSize = clamp(
     nextItemVirtualSize,
     resolvedLayout[nextItemIndex].minSize,
@@ -28,40 +26,43 @@ export const newStateAlgorithm = (
 
   // if next item is collapsed
   // try to expand it
-  if (resolvedLayout[nextItemIndex].collapsible && flexGrowOnResizeStart[nextItemIndex] === 0) {
+  if (resolvedLayout[nextItemIndex].collapsible && sizesOnResizeStart[nextItemIndex] === 0) {
     // if we can't expand it: return initial state
-    if (nextItemVirtualSize < resolvedLayout[nextItemIndex].minSize) return flexGrowOnResizeStart;
+    if (nextItemVirtualSize < resolvedLayout[nextItemIndex].minSize) return sizesOnResizeStart;
   }
 
   // update next item size
-  result[nextItemIndex] = nextItemActualSize;
+  updatedSizes[nextItemIndex] = nextItemActualSize;
 
-  // now try to shrink items
+  // now try to shrink items from opposite side
+  // We have some budget to spend on changing the sizes
   let remainingBudget = Math.min(
-    resolvedLayout[nextItemIndex].maxSize - flexGrowOnResizeStart[nextItemIndex],
+    resolvedLayout[nextItemIndex].maxSize - sizesOnResizeStart[nextItemIndex],
     totalBudget,
   );
   let spentBudget = 0;
 
-  const initIndex = () =>
+  // I tried to generalize the algorithm for both directions
+  // That's why we need this
+  const getInitialIndex = () =>
     resizeDirection === 'left' ? resizableItemIndex : resizableItemIndex + 1;
   const checkCondition = (index: number) =>
     resizeDirection === 'left' ? index >= 0 : index < itemCount;
   const getNextIndex = (index: number) => (resizeDirection === 'left' ? index - 1 : index + 1);
 
-  let index = initIndex();
+  let index = getInitialIndex();
 
   // shrink size
   while (checkCondition(index)) {
     // can't shrink more
-    if (flexGrowOnResizeStart[index] === 0) {
+    if (sizesOnResizeStart[index] === 0) {
       index = getNextIndex(index);
 
       continue;
     }
 
-    const virtualSize =
-      flexGrowOnResizeStart[index] - sign * Math.sign(deltaSize) * remainingBudget;
+    // Minus here because we go to another direction
+    const virtualSize = sizesOnResizeStart[index] - sign * remainingBudget;
 
     const actualSize = clamp(
       virtualSize,
@@ -69,28 +70,28 @@ export const newStateAlgorithm = (
       resolvedLayout[index].maxSize,
     );
 
-    const deltaSpent = flexGrowOnResizeStart[index] - actualSize;
+    const deltaSpent = sizesOnResizeStart[index] - actualSize;
 
     remainingBudget -= deltaSpent;
     spentBudget += deltaSpent;
-    result[index] = actualSize;
+    updatedSizes[index] = actualSize;
 
     index = getNextIndex(index);
 
     // if we ran out of budget it means
     // that we updated all the items
     // don't need to do anything after
-    if (isZero(remainingBudget)) return result;
+    if (isZero(remainingBudget)) return updatedSizes;
   }
 
   // here we have some budget to shrink
   // so it means we need to try to collapse items
 
-  index = initIndex();
+  index = getInitialIndex();
 
   while (checkCondition(index)) {
     // can't shrink more
-    if (flexGrowOnResizeStart[index] === 0) {
+    if (sizesOnResizeStart[index] === 0) {
       index = getNextIndex(index);
 
       continue;
@@ -100,7 +101,7 @@ export const newStateAlgorithm = (
     if (resolvedLayout[index].collapsible && remainingBudget >= resolvedLayout[index].minSize) {
       remainingBudget -= resolvedLayout[index].minSize;
       spentBudget += resolvedLayout[index].minSize;
-      result[index] = 0;
+      updatedSizes[index] = 0;
     }
 
     index = getNextIndex(index);
@@ -115,14 +116,14 @@ export const newStateAlgorithm = (
   // that we got from the item from opposite side
   // so we need to correct that item size
   if (remainingBudget > EPSILON) {
-    result[nextItemIndex] = clamp(
-      flexGrowOnResizeStart[nextItemIndex] + sign * Math.sign(deltaSize) * spentBudget,
+    updatedSizes[nextItemIndex] = clamp(
+      sizesOnResizeStart[nextItemIndex] + sign * spentBudget,
       resolvedLayout[nextItemIndex].minSize,
       resolvedLayout[nextItemIndex].maxSize,
     );
   }
 
-  return result;
+  return updatedSizes;
 };
 
 export type ResizeAlgorithm = typeof newStateAlgorithm;
