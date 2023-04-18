@@ -1,10 +1,10 @@
-import { ParentComponent, mergeProps } from 'solid-js';
-import { createEffect, on, onCleanup, onMount, useContext } from 'solid-js';
+import type { ParentComponent } from 'solid-js';
+import { createEffect, mergeProps, on, onCleanup, onMount, untrack, useContext } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
+import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
 import { PanelContext } from './context';
 import { makeLogText } from './utils/log';
-import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
 
 export interface PanelProps {
   id: string;
@@ -113,7 +113,7 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
         },
         { defer: true },
       ),
-      size(),
+      untrack(size),
     );
   });
 
