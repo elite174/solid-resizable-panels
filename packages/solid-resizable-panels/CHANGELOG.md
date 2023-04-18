@@ -19,3 +19,7 @@
 - Supported custom resize algorithm
 - Rewritten resizing algorithm
 - Fixed some bugs
+
+# 0.4.1
+
+- Fixed calling onExpand/onCollapse callbacks
