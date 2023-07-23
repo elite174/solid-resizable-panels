@@ -1,5 +1,8 @@
 # Solid-resizable-panels
 
+[![version](https://img.shields.io/npm/v/solid-resizable-panels?style=for-the-badge)](https://www.npmjs.com/package/solid-resizable-panels)
+![npm](https://img.shields.io/npm/dw/solid-resizable-panels?style=for-the-badge)
+
 A collection of components for building resizable panels.
 
 https://solid-resizable-panels.vercel.app/
