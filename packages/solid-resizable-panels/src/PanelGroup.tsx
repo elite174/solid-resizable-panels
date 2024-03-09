@@ -171,6 +171,17 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
                 throw new Error('Layout and sizes length mismatch');
               if (sizes.reduce((acc, size) => acc + size, 0) !== 100)
                 throw new Error('Sizes should sum to 100 (100%)');
+              // Check minSize and maxSize
+              for (let i = 0; i < sizes.length; i++) {
+                if (sizes[i] < $state.currentLayout[i].minSize)
+                  throw new Error(
+                    `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
+                  );
+                if (sizes[i] > $state.currentLayout[i].maxSize)
+                  throw new Error(
+                    `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
+                  );
+              }
 
               setState(
                 produce((state) => {
