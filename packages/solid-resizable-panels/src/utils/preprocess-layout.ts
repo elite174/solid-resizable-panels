@@ -3,8 +3,9 @@ import type { LayoutItem, ResolvedLayoutItem } from '../types';
 import { TOTAL_FLEX_GROW } from '../constants';
 import { makeLogText } from './log';
 import { roundTo4Digits } from './math';
+import type { Logger } from '../PanelGroup';
 
-export const preprocessLayout = (layout: LayoutItem[]): ResolvedLayoutItem[] => {
+export const preprocessLayout = (layout: LayoutItem[], logger?: Logger): ResolvedLayoutItem[] => {
   let itemCountWithUndefinedSize = 0;
   let spentFlexGrow = 0;
 
@@ -30,9 +31,9 @@ export const preprocessLayout = (layout: LayoutItem[]): ResolvedLayoutItem[] => 
     const errorMaxSize = resolvedItem.size > resolvedItem.maxSize;
 
     if (errorMinSize || errorMaxSize)
-      console.warn(
+      logger?.warn(
         makeLogText(
-          `Error. Item with id="${item.id}" has wrong size limitations: its size (${
+          `Item with id="${item.id}" has wrong size limitations: its size (${
             resolvedItem.size
           }%) is ${errorMinSize ? 'less' : 'more'} than ${
             errorMinSize ? 'minimum' : 'maximum'

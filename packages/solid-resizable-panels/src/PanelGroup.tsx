@@ -26,8 +26,15 @@ import { isHorizontalDirection } from './utils/direction';
 import { roundTo4Digits } from './utils/math';
 import { useTotalPanelSizePX } from './hooks/use-panel-size';
 import { createMouseDelta } from './utils/mouse-delta';
+import { makeLogText } from './utils/log';
+
+export interface Logger {
+  warn(message: string): void;
+  error(message: string): void;
+}
 
 export interface IPanelContext {
+  logger?: Logger;
   registerPanel: (panelData: LayoutItem, index?: number) => void;
   unregisterPanel: (panelId: string) => void;
   useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
@@ -68,6 +75,10 @@ export interface PanelGroupProps {
    */
   class?: string;
   /**
+   * A logger to be used for diagnostic messages
+   */
+  logger?: Logger;
+  /**
    * API setter for the parent component
    * You can use this API to get and set the layout of the panels
    */
@@ -106,9 +117,9 @@ export const PanelContext = createContext<IPanelContext>();
 
 const isReverseDirection = (direction: Direction) => direction.includes('reverse');
 
-const createProcessedLayout = () => {
+const createProcessedLayout = (logger?: Logger) => {
   const [initialLayout, setInitialLayout] = createSignal<LayoutItem[]>([]);
-  const processedLayout = createMemo(() => preprocessLayout(initialLayout()));
+  const processedLayout = createMemo(() => preprocessLayout(initialLayout(), logger));
 
   const addLayoutItem = (data: LayoutItem, index?: number) =>
     setInitialLayout((layout) => {
@@ -139,7 +150,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   );
 
   const [containerRef, setContainerRef] = createSignal<HTMLElement | undefined>();
-  const { processedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout();
+  const { processedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
   const [$state, setState] = createStore(
     { currentLayout: processedLayout() },
     { name: 'PanelStore' },
@@ -168,18 +179,22 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
           setLayout: (sizes: number[]) =>
             untrack(() => {
               if ($state.currentLayout.length !== sizes.length)
-                throw new Error('Layout and sizes length mismatch');
+                props.logger?.error('Layout and sizes length mismatch');
               if (sizes.reduce((acc, size) => acc + size, 0) !== 100)
-                throw new Error('Sizes should sum to 100 (100%)');
+                props.logger?.error('Sizes should sum to 100 (100%)');
               // Check minSize and maxSize
               for (let i = 0; i < sizes.length; i++) {
                 if (sizes[i] < $state.currentLayout[i].minSize)
-                  throw new Error(
-                    `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
+                  props.logger?.error(
+                    makeLogText(
+                      `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
+                    ),
                   );
                 if (sizes[i] > $state.currentLayout[i].maxSize)
-                  throw new Error(
-                    `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
+                  props.logger?.error(
+                    makeLogText(
+                      `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
+                    ),
                   );
               }
 
@@ -204,6 +219,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   return (
     <PanelContext.Provider
       value={{
+        logger: props.logger,
         registerPanel: addLayoutItem,
         unregisterPanel: removeLayoutItem,
         useData: (panelId) =>

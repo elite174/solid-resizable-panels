@@ -32,13 +32,8 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
 
   const context = useContext(PanelContext);
 
-  if (!context) {
-    console.warn(
-      makeLogText(`Error: Panel component must be rendered inside PanelGroup component`),
-    );
-
-    return null;
-  }
+  if (!context)
+    throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
 
   return (
     <Dynamic
