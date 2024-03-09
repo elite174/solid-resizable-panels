@@ -1,5 +1,5 @@
 import type { ParentComponent } from 'solid-js';
-import { createEffect, mergeProps, on, onCleanup, onMount, untrack, useContext } from 'solid-js';
+import { createComputed, mergeProps, on, onCleanup, onMount, untrack, useContext } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
 import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
@@ -78,6 +78,16 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
 
   const size = () => data()?.size;
 
+  createComputed(
+    on(
+      size,
+      (currentSize) => {
+        if (currentSize !== undefined) props.onResize?.(currentSize);
+      },
+      { defer: true },
+    ),
+  );
+
   onMount(() => {
     const panelId = props.id;
 
@@ -96,10 +106,10 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
   });
 
   // Effect for calling onExpand and onCollapse callbacks
-  createEffect(() => {
+  createComputed(() => {
     if (!props.collapsible) return;
 
-    createEffect(
+    createComputed(
       on(
         size,
         (currentSize, previousSize) => {
@@ -115,24 +125,6 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
       ),
       untrack(size),
     );
-  });
-
-  // Calling onResize callback
-  createEffect(() => {
-    const onResize = props.onResize;
-
-    if (onResize)
-      // I like how it's easy to make nested effects in solid
-      // * If you have an onResize callback then start track size accessor *
-      createEffect(
-        on(
-          size,
-          (currentSize) => {
-            if (currentSize !== undefined) onResize(currentSize);
-          },
-          { defer: true },
-        ),
-      );
   });
 
   // Actually we may not render this until the data is computed,
