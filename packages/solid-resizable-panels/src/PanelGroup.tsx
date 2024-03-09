@@ -2,15 +2,18 @@ import {
   type Accessor,
   type ParentComponent,
   createEffect,
-  createRenderEffect,
+  createComputed,
   on,
   onCleanup,
   onMount,
   untrack,
   createRoot,
   createContext,
+  mergeProps,
+  createMemo,
+  createSignal,
 } from 'solid-js';
-import { mergeProps, createMemo, createSignal, createComputed } from 'solid-js';
+
 import { createStore, produce } from 'solid-js/store';
 import { Dynamic } from 'solid-js/web';
 
@@ -28,7 +31,7 @@ export interface IPanelContext {
   registerPanel: (panelData: LayoutItem, index?: number) => void;
   unregisterPanel: (panelId: string) => void;
   useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
-  onResize: (panelId: string, e: MouseEvent) => void;
+  onPanelResize: (panelId: string, e: MouseEvent) => void;
 }
 
 export type PagelGroupAPI = {
@@ -68,7 +71,7 @@ export interface PanelGroupProps {
    * API setter for the parent component
    * You can use this API to get and set the layout of the panels
    */
-  api?: (api: PagelGroupAPI) => void;
+  setAPI?: (api: PagelGroupAPI) => void;
   /**
    * A callback called during resize
    */
@@ -153,81 +156,9 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     ),
   );
 
-  const createMouseDownHandler = (panelId: string, e: MouseEvent) => {
-    // Dispose this when the component is unmounted?
-    createRoot((dispose) => {
-      const mouseDelta = createMouseDelta({
-        zoom: () => props.zoom,
-        scale: () => props.scale,
-      });
-
-      mouseDelta.init(e);
-
-      const totalPanelSizePX = useTotalPanelSizePX(
-        containerRef,
-        () => $state.currentLayout.length,
-        () => props.direction,
-      );
-
-      const flexGrowOnResizeStart = $state.currentLayout.map((item) => item.size);
-      // There things are not reactive during resize
-      const isHorizontal = isHorizontalDirection(props.direction);
-      const reverseSign = isReverseDirection(props.direction) ? -1 : 1;
-
-      const deltaPX = () =>
-        (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) * reverseSign;
-
-      createEffect(
-        on(deltaPX, (currentDeltaPX) => {
-          const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
-
-          if (deltaFlexGrow !== 0) {
-            const resizableItemIndex = $state.currentLayout.findIndex(
-              (item) => item.id === panelId,
-            );
-
-            // TODO handle error somehow
-            if (resizableItemIndex === -1) return;
-
-            const newState = props
-              .resizeAlgorithm(
-                $state.currentLayout,
-                flexGrowOnResizeStart,
-                resizableItemIndex,
-                deltaFlexGrow,
-                // round values
-              )
-              .map(roundTo4Digits);
-
-            setState(
-              produce((state) => {
-                for (let i = 0; i < newState.length; i++) {
-                  // hate TS for this
-                  if (newState[i] !== undefined) state.currentLayout[i].size = newState[i]!;
-                }
-              }),
-            );
-
-            props.onLayoutChange?.(newState);
-          }
-        }),
-      );
-
-      const handleMouseMove = (e: MouseEvent) => mouseDelta.updateMouseDelta(e);
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', dispose, { once: true });
-
-      onCleanup(() => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', dispose);
-      });
-    });
-  };
-
-  createRenderEffect(
+  createComputed(
     on(
-      () => props.api,
+      () => props.setAPI,
       (apiSetter) => {
         if (!apiSetter) return;
 
@@ -266,7 +197,77 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         unregisterPanel: removeLayoutItem,
         useData: (panelId) =>
           createMemo(() => $state.currentLayout.find((item) => item.id === panelId)),
-        onResize: createMouseDownHandler,
+        onPanelResize: (panelId: string, e: MouseEvent) => {
+          // Dispose this when the component is unmounted?
+          createRoot((dispose) => {
+            const mouseDelta = createMouseDelta({
+              zoom: () => props.zoom,
+              scale: () => props.scale,
+            });
+
+            mouseDelta.init(e);
+
+            const totalPanelSizePX = useTotalPanelSizePX(
+              containerRef,
+              () => $state.currentLayout.length,
+              () => props.direction,
+            );
+
+            const flexGrowOnResizeStart = $state.currentLayout.map((item) => item.size);
+            // There things are not reactive during resize
+            const isHorizontal = isHorizontalDirection(props.direction);
+            const reverseSign = isReverseDirection(props.direction) ? -1 : 1;
+
+            const deltaPX = () =>
+              (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) * reverseSign;
+
+            createEffect(
+              on(deltaPX, (currentDeltaPX) => {
+                const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
+
+                if (deltaFlexGrow !== 0) {
+                  const resizableItemIndex = $state.currentLayout.findIndex(
+                    (item) => item.id === panelId,
+                  );
+
+                  // TODO handle error somehow
+                  if (resizableItemIndex === -1) return;
+
+                  const newState = props
+                    .resizeAlgorithm(
+                      $state.currentLayout,
+                      flexGrowOnResizeStart,
+                      resizableItemIndex,
+                      deltaFlexGrow,
+                      // round values
+                    )
+                    .map(roundTo4Digits);
+
+                  setState(
+                    produce((state) => {
+                      for (let i = 0; i < newState.length; i++) {
+                        // hate TS for this
+                        if (newState[i] !== undefined) state.currentLayout[i].size = newState[i]!;
+                      }
+                    }),
+                  );
+
+                  props.onLayoutChange?.(newState);
+                }
+              }),
+            );
+
+            const handleMouseMove = (e: MouseEvent) => mouseDelta.updateMouseDelta(e);
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', dispose, { once: true });
+
+            onCleanup(() => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', dispose);
+            });
+          });
+        },
       }}
     >
       <Dynamic

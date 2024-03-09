@@ -29,6 +29,7 @@ export interface ResizeHandleProps {
 
 export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) => {
   const props = mergeProps({ tag: 'button', disabled: false }, initialProps);
+
   const context = useContext(PanelContext);
 
   if (!context) {
@@ -38,26 +39,6 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
 
     return null;
   }
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (props.disabled) return;
-
-    const resizeHandleElement = e.currentTarget;
-
-    // find resizable panel dynamically
-    const panelId =
-      resizeHandleElement instanceof HTMLElement
-        ? resizeHandleElement.previousElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
-        : null;
-
-    // check that we have panels from both sides
-    const nextPanelId =
-      resizeHandleElement instanceof HTMLElement
-        ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
-        : null;
-
-    if (panelId && nextPanelId) context.onResize(panelId, e);
-  };
 
   return (
     <Dynamic
@@ -69,7 +50,27 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
         [CLASSNAMES.resizeHandleDisabled]: props.disabled,
         [props.class ?? '']: true,
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e: MouseEvent) => {
+        if (props.disabled) return;
+
+        const resizeHandleElement = e.currentTarget;
+
+        // find resizable panel dynamically
+        const panelId =
+          resizeHandleElement instanceof HTMLElement
+            ? resizeHandleElement.previousElementSibling?.getAttribute(
+                SOLID_PANEL_ID_ATTRIBUTE_NAME,
+              )
+            : null;
+
+        // check that we have panels from both sides
+        const nextPanelId =
+          resizeHandleElement instanceof HTMLElement
+            ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
+            : null;
+
+        if (panelId && nextPanelId) context.onPanelResize(panelId, e);
+      }}
     >
       {props.children}
     </Dynamic>
