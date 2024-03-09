@@ -56,13 +56,11 @@ export interface PanelGroupProps {
   /**
    * If the parent element has CSS zoom property
    * The zoom value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   zoom?: number;
   /**
    * If the parent element has CSS scale property
    * The scale value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   scale?: number;
   /**
@@ -141,8 +139,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   const props = mergeProps(
     {
       tag: 'div',
-      zoom: 1,
-      scale: 1,
       direction: 'row' as Direction,
       resizeAlgorithm: newStateAlgorithm,
     } satisfies Partial<PanelGroupProps>,

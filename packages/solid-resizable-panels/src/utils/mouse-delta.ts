@@ -2,11 +2,11 @@ import { batch, createSignal } from 'solid-js';
 import type { Accessor } from 'solid-js';
 
 export type CorrectionAccessors = {
-  zoom: Accessor<number>;
-  scale: Accessor<number>;
+  zoom: Accessor<number | undefined>;
+  scale: Accessor<number | undefined>;
 };
 
-export const correctValue = (value: number, zoom: number, scale: number) => value / zoom / scale;
+export const correctValue = (value: number, zoom = 1, scale = 1) => value / zoom / scale;
 
 export const createMouseDelta = ({ zoom, scale }: CorrectionAccessors) => {
   // Assume that we don't change zoom and scale during mouse delta updates
