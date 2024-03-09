@@ -41,7 +41,7 @@ export interface IPanelContext {
   onPanelResize: (panelId: string, e: MouseEvent) => void;
 }
 
-export type PagelGroupAPI = {
+export type PanelGroupAPI = {
   getStaticLayout(): number[];
   getSignalLayout(): Accessor<number[]>;
   setLayout(layout: number[]): void;
@@ -80,7 +80,7 @@ export interface PanelGroupProps {
    * API setter for the parent component
    * You can use this API to get and set the layout of the panels
    */
-  setAPI?: (api: PagelGroupAPI) => void;
+  setAPI?: (api: PanelGroupAPI) => void;
   /**
    * A callback called during resize
    */
@@ -174,24 +174,32 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
           getSignalLayout: () => createMemo(() => $state.currentLayout.map(($item) => $item.size)),
           setLayout: (sizes: number[]) =>
             untrack(() => {
-              if ($state.currentLayout.length !== sizes.length)
-                props.logger?.error('Layout and sizes length mismatch');
-              if (sizes.reduce((acc, size) => acc + size, 0) !== 100)
-                props.logger?.error('Sizes should sum to 100 (100%)');
+              if ($state.currentLayout.length !== sizes.length) {
+                props.logger?.error(makeLogText('Layout and sizes length mismatch'));
+                return;
+              }
+              if (sizes.reduce((acc, size) => acc + size, 0) !== 100) {
+                props.logger?.error(makeLogText('Sizes should sum to 100 (100%)'));
+                return;
+              }
               // Check minSize and maxSize
               for (let i = 0; i < sizes.length; i++) {
-                if (sizes[i] < $state.currentLayout[i].minSize)
+                if (sizes[i] < $state.currentLayout[i].minSize) {
                   props.logger?.error(
                     makeLogText(
                       `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
                     ),
                   );
-                if (sizes[i] > $state.currentLayout[i].maxSize)
+                  return;
+                }
+                if (sizes[i] > $state.currentLayout[i].maxSize) {
                   props.logger?.error(
                     makeLogText(
                       `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
                     ),
                   );
+                  return;
+                }
               }
 
               setState(
