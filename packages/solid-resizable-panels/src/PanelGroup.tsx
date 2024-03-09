@@ -44,6 +44,7 @@ export interface IPanelContext {
 export type PanelGroupAPI = {
   getStaticLayout(): number[];
   setLayout(layout: number[]): void;
+  collapse(panelId: string): void;
 };
 
 export interface PanelGroupProps {
@@ -170,6 +171,31 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
         apiSetter({
           getStaticLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
+          collapse: (panelId) =>
+            untrack(() => {
+              const panel = $state.currentLayout.find((item) => item.id === panelId);
+
+              if (!panel) return;
+              if (!panel.collapsible) return;
+              if (panel.size === 0) return;
+
+              // try to collapse this panel and recompute layout
+              const newState = props
+                .resizeAlgorithm(
+                  $state.currentLayout,
+                  $state.currentLayout.map((item) => item.size),
+                  $state.currentLayout.findIndex((item) => item.id === panelId),
+                  -panel.size,
+                )
+                .map(roundTo4Digits);
+
+              setState(
+                produce((state) => {
+                  for (let i = 0; i < newState.length; i++)
+                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
+                }),
+              );
+            }),
           setLayout: (sizes: number[]) =>
             untrack(() => {
               if ($state.currentLayout.length !== sizes.length) {
@@ -274,10 +300,8 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
                   setState(
                     produce((state) => {
-                      for (let i = 0; i < newState.length; i++) {
-                        // hate TS for this
-                        if (newState[i] !== undefined) state.currentLayout[i].size = newState[i]!;
-                      }
+                      for (let i = 0; i < newState.length; i++)
+                        if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
                     }),
                   );
 

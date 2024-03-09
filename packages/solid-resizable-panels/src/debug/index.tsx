@@ -15,6 +15,23 @@ const TestApp = () => {
   return (
     <>
       <button onClick={() => api()?.setLayout([36, 30, 40])}>Call api</button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          // @ts-ignore
+          api()?.collapse(e.target['panel-id'].value);
+        }}
+      >
+        <fieldset>
+          <label>
+            Panel id to collapse
+            <input type="text" name="panel-id" />
+          </label>
+          <button>Collapse</button>
+        </fieldset>
+      </form>
+
       <PanelGroup
         class={styles.debug}
         direction="row"
