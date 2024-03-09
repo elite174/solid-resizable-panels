@@ -22,17 +22,11 @@ export const createMouseDelta = ({ zoom, scale }: CorrectionAccessors) => {
     init: (e: MouseEvent) => {
       initialClientX = correctValue(e.clientX, zoom(), scale());
       initialClientY = correctValue(e.clientY, zoom(), scale());
-
-      batch(() => {
-        setDeltaX(0);
-        setDeltaY(0);
-      });
     },
-    updateMouseDelta: (e: MouseEvent) => {
+    updateMouseDelta: (e: MouseEvent) =>
       batch(() => {
         setDeltaX(correctValue(e.clientX, zoom(), scale()) - initialClientX);
         setDeltaY(correctValue(e.clientY, zoom(), scale()) - initialClientY);
-      });
-    },
+      }),
   };
 };
