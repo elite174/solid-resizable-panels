@@ -2,7 +2,7 @@ import type { ParentComponent } from 'solid-js';
 import { mergeProps, useContext } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
-import { PanelContext } from './context';
+import { PanelContext } from './PanelGroup';
 import { makeLogText } from './utils/log';
 import {
   CLASSNAMES,
@@ -56,7 +56,7 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
         ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
         : null;
 
-    if (panelId && nextPanelId) context.createMouseDownHandler(panelId)(e);
+    if (panelId && nextPanelId) context.onResize(panelId, e);
   };
 
   return (

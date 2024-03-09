@@ -3,7 +3,7 @@ import { createEffect, mergeProps, on, onCleanup, onMount, untrack, useContext }
 import { Dynamic } from 'solid-js/web';
 
 import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
-import { PanelContext } from './context';
+import { PanelContext } from './PanelGroup';
 import { makeLogText } from './utils/log';
 
 export interface PanelProps {
