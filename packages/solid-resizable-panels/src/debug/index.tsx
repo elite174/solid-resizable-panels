@@ -15,7 +15,13 @@ const TestApp = () => {
   return (
     <>
       <button onClick={() => api()?.setLayout([36, 30, 40])}>Call api</button>
-      <PanelGroup class={styles.debug} direction="row" setAPI={setAPI} logger={console}>
+      <PanelGroup
+        class={styles.debug}
+        direction="row"
+        setAPI={setAPI}
+        logger={console}
+        onLayoutChange={console.log}
+      >
         <Panel
           id="1"
           initialSize={30}

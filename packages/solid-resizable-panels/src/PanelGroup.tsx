@@ -43,7 +43,6 @@ export interface IPanelContext {
 
 export type PanelGroupAPI = {
   getStaticLayout(): number[];
-  getSignalLayout(): Accessor<number[]>;
   setLayout(layout: number[]): void;
 };
 
@@ -171,7 +170,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
         apiSetter({
           getStaticLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
-          getSignalLayout: () => createMemo(() => $state.currentLayout.map(($item) => $item.size)),
           setLayout: (sizes: number[]) =>
             untrack(() => {
               if ($state.currentLayout.length !== sizes.length) {
