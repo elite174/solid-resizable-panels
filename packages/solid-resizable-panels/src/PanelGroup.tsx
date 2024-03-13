@@ -305,6 +305,8 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
                     }),
                   );
 
+                  // TODO: fix this!
+                  // don't call it layout was not changed
                   props.onLayoutChange?.(newState);
                 }
               }),
