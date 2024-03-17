@@ -44,7 +44,16 @@ export interface IPanelContext {
 export type PanelGroupAPI = {
   getStaticLayout(): number[];
   setLayout(layout: number[]): void;
+  /**
+   * Trying to collapse the panel to it's minSize
+   */
   collapse(panelId: string): void;
+  /**
+   * Expand the panel to the maxSize
+   * You can also pass the size to expand the panel to
+   * (it should be between minSize and maxSize)
+   */
+  expand(panelId: string, expandSize?: number): void;
 };
 
 export interface PanelGroupProps {
@@ -176,7 +185,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
               const panel = $state.currentLayout.find((item) => item.id === panelId);
 
               if (!panel) return;
-              if (!panel.collapsible) return;
               if (panel.size === 0) return;
 
               // try to collapse this panel and recompute layout
@@ -185,7 +193,39 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
                   $state.currentLayout,
                   $state.currentLayout.map((item) => item.size),
                   $state.currentLayout.findIndex((item) => item.id === panelId),
-                  -panel.size,
+                  -(panel.collapsible ? panel.size : panel.size - panel.minSize),
+                )
+                .map(roundTo4Digits);
+
+              setState(
+                produce((state) => {
+                  for (let i = 0; i < newState.length; i++)
+                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
+                }),
+              );
+            }),
+          expand: (panelId, size?: number) =>
+            untrack(() => {
+              const panel = $state.currentLayout.find((item) => item.id === panelId);
+
+              if (!panel) return;
+              if (!panel.collapsible) return;
+              if (panel.size !== 0) return;
+
+              const expandSize =
+                size !== undefined
+                  ? size >= panel.minSize && size <= panel.maxSize
+                    ? size
+                    : panel.size
+                  : panel.maxSize;
+
+              // try to expand this panel and recompute layout
+              const newState = props
+                .resizeAlgorithm(
+                  $state.currentLayout,
+                  $state.currentLayout.map((item) => item.size),
+                  $state.currentLayout.findIndex((item) => item.id === panelId),
+                  expandSize,
                 )
                 .map(roundTo4Digits);
 

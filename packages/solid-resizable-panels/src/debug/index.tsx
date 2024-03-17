@@ -32,6 +32,23 @@ const TestApp = () => {
         </fieldset>
       </form>
 
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          // @ts-ignore
+          api()?.expand(e.target['panel-id'].value);
+        }}
+      >
+        <fieldset>
+          <label>
+            Panel id to expand
+            <input type="text" name="panel-id" />
+          </label>
+          <button>Expand</button>
+        </fieldset>
+      </form>
+
       <PanelGroup
         class={styles.debug}
         direction="row"
@@ -43,6 +60,7 @@ const TestApp = () => {
           id="1"
           initialSize={30}
           minSize={20}
+          maxSize={30}
           collapsible
           onCollapse={() => console.log('collapsed')}
           onExpand={() => console.log('expanded')}
