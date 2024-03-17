@@ -1,4 +1,5 @@
 import { render } from 'solid-js/web';
+import { Show, createSignal } from 'solid-js';
 
 import '../styles.css';
 
@@ -7,14 +8,15 @@ import { Panel } from '../Panel';
 import { ResizeHandle } from '../ResizeHandle';
 
 import styles from './styles.module.css';
-import { createSignal } from 'solid-js';
 
 const TestApp = () => {
   const [api, setAPI] = createSignal<PanelGroupAPI>();
+  const [isPanelVisible, setPanelVisible] = createSignal(true);
 
   return (
     <>
       <button onClick={() => api()?.setLayout([36, 30, 40])}>Call api</button>
+      <button onClick={() => setPanelVisible((visible) => !visible)}>Toggle panel</button>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -68,10 +70,12 @@ const TestApp = () => {
           hi!
         </Panel>
         <ResizeHandle />
-        <Panel id="2" minSize={20} maxSize={70} collapsible>
-          hi 2!
-        </Panel>
-        <ResizeHandle />
+        <Show when={isPanelVisible()}>
+          <Panel id="2" minSize={20} maxSize={70} collapsible>
+            hi 2!
+          </Panel>
+          <ResizeHandle />
+        </Show>
         <Panel id="3" minSize={20} collapsible>
           hi 3!
         </Panel>
