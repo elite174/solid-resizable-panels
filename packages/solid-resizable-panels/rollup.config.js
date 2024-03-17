@@ -3,7 +3,7 @@ import copy from 'rollup-plugin-copy';
 
 export default withSolid({
   input: 'src/index.ts',
-  targets: ['esm', 'cjs'],
+  targets: ['esm'],
   plugins: [
     copy({
       targets: [{ src: 'src/styles.css', dest: 'dist' }],
