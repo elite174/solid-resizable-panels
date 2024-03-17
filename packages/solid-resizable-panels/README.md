@@ -7,7 +7,7 @@ https://solid-resizable-panels.vercel.app/
 ## Usage
 
 ```jsx
-import {PanelGroup, Panel, ResizeHandle} from 'solid-resizable-panels';
+import { PanelGroup, Panel, ResizeHandle } from 'solid-resizable-panels';
 // Don't forget to import styles!
 import 'solid-resizable-panels/styles.css';
 
@@ -35,6 +35,33 @@ const TestApp = () => {
 ### PanelGroup
 
 ```ts
+export interface Logger {
+  warn(message: string): void;
+  error(message: string): void;
+}
+
+export type PanelGroupAPI = {
+  /**
+   * Returns the current layout of the panels
+   */
+  getLayout(): number[];
+  /**
+   * Set the layout of the panels
+   * The layout should be aligned with configuration of the panels (minSize, maxSize, collapsible and etc.)
+   */
+  setLayout(layout: number[]): void;
+  /**
+   * Trying to collapse the panel to it's minSize
+   */
+  collapse(panelId: string): void;
+  /**
+   * Expand the panel to its maximum possible size
+   * You can also pass the size to expand the panel to
+   * (it should be between minSize and maxSize)
+   */
+  expand(panelId: string, expandSize?: number): void;
+};
+
 export interface PanelGroupProps {
   /**
    * A flex-direction property applied to the element
@@ -44,13 +71,11 @@ export interface PanelGroupProps {
   /**
    * If the parent element has CSS zoom property
    * The zoom value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   zoom?: number;
   /**
    * If the parent element has CSS scale property
    * The scale value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   scale?: number;
   /**
@@ -62,6 +87,15 @@ export interface PanelGroupProps {
    * Extra class passed to panel DOM element.
    */
   class?: string;
+  /**
+   * A logger to be used for diagnostic messages
+   */
+  logger?: Logger;
+  /**
+   * API setter for the parent component
+   * You can use this API to get and set the layout of the panels
+   */
+  setAPI?: (api: PanelGroupAPI) => void;
   /**
    * A callback called during resize
    */
