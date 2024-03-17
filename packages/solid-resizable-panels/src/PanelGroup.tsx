@@ -42,7 +42,14 @@ export interface IPanelContext {
 }
 
 export type PanelGroupAPI = {
-  getStaticLayout(): number[];
+  /**
+   * Returns the current layout of the panels
+   */
+  getLayout(): number[];
+  /**
+   * Set the layout of the panels
+   * The layout should be aligned with configuration of the panels (minSize, maxSize, collapsible and etc.)
+   */
   setLayout(layout: number[]): void;
   /**
    * Trying to collapse the panel to it's minSize
@@ -196,7 +203,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         if (!apiSetter) return;
 
         apiSetter({
-          getStaticLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
+          getLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
           collapse: (panelId) =>
             untrack(() => {
               const panel = $state.currentLayout.find((item) => item.id === panelId);
