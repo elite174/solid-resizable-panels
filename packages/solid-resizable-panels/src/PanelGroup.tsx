@@ -49,7 +49,7 @@ export type PanelGroupAPI = {
    */
   collapse(panelId: string): void;
   /**
-   * Expand the panel to the maxSize
+   * Expand the panel to its maximum possible size
    * You can also pass the size to expand the panel to
    * (it should be between minSize and maxSize)
    */
