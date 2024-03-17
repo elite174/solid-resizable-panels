@@ -22,6 +22,7 @@ const computeTotalPanelSizePX = (
 
 /**
  * Returns an accessor with cumulative panels width in px
+ * TODO do this with mutation observer
  */
 export const useTotalPanelSizePX = (
   container: Accessor<HTMLElement | undefined>,

@@ -2,7 +2,7 @@ import type { ParentComponent } from 'solid-js';
 import { mergeProps, useContext } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
-import { PanelContext } from './context';
+import { PanelContext } from './PanelGroup';
 import { makeLogText } from './utils/log';
 import {
   CLASSNAMES,
@@ -29,35 +29,11 @@ export interface ResizeHandleProps {
 
 export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) => {
   const props = mergeProps({ tag: 'button', disabled: false }, initialProps);
+
   const context = useContext(PanelContext);
 
-  if (!context) {
-    console.warn(
-      makeLogText(`Error: Panel component must be rendered inside PanelGroup component`),
-    );
-
-    return null;
-  }
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (props.disabled) return;
-
-    const resizeHandleElement = e.currentTarget;
-
-    // find resizable panel dynamically
-    const panelId =
-      resizeHandleElement instanceof HTMLElement
-        ? resizeHandleElement.previousElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
-        : null;
-
-    // check that we have panels from both sides
-    const nextPanelId =
-      resizeHandleElement instanceof HTMLElement
-        ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
-        : null;
-
-    if (panelId && nextPanelId) context.createMouseDownHandler(panelId)(e);
-  };
+  if (!context)
+    throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
 
   return (
     <Dynamic
@@ -69,7 +45,27 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
         [CLASSNAMES.resizeHandleDisabled]: props.disabled,
         [props.class ?? '']: true,
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e: MouseEvent) => {
+        if (props.disabled) return;
+
+        const resizeHandleElement = e.currentTarget;
+
+        // find resizable panel dynamically
+        const panelId =
+          resizeHandleElement instanceof HTMLElement
+            ? resizeHandleElement.previousElementSibling?.getAttribute(
+                SOLID_PANEL_ID_ATTRIBUTE_NAME,
+              )
+            : null;
+
+        // check that we have panels from both sides
+        const nextPanelId =
+          resizeHandleElement instanceof HTMLElement
+            ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
+            : null;
+
+        if (panelId && nextPanelId) context.onPanelResize(panelId, e);
+      }}
     >
       {props.children}
     </Dynamic>

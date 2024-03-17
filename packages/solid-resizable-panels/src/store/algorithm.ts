@@ -1,13 +1,17 @@
 import type { ResolvedLayoutItem } from '../types';
 import { EPSILON, clamp, isZero } from '../utils/math';
 
-// TODO refactor this and add tests
 export const newStateAlgorithm = (
   resolvedLayout: ResolvedLayoutItem[],
   sizesOnResizeStart: number[],
   resizableItemIndex: number,
   deltaSize: number,
 ): number[] => {
+  if (resizableItemIndex === resolvedLayout.length - 1) {
+    resizableItemIndex--;
+    deltaSize = -deltaSize;
+  }
+
   let updatedSizes = sizesOnResizeStart.slice();
   const resizeDirection = Math.sign(deltaSize) === 1 ? 'right' : 'left';
   const totalBudget = Math.abs(deltaSize);
@@ -46,14 +50,14 @@ export const newStateAlgorithm = (
   // That's why we need this
   const getInitialIndex = () =>
     resizeDirection === 'left' ? resizableItemIndex : resizableItemIndex + 1;
-  const checkCondition = (index: number) =>
+  const canGoNext = (index: number) =>
     resizeDirection === 'left' ? index >= 0 : index < itemCount;
   const getNextIndex = (index: number) => (resizeDirection === 'left' ? index - 1 : index + 1);
 
   let index = getInitialIndex();
 
   // shrink size
-  while (checkCondition(index)) {
+  while (canGoNext(index)) {
     // can't shrink more
     if (sizesOnResizeStart[index] === 0) {
       index = getNextIndex(index);
@@ -89,7 +93,7 @@ export const newStateAlgorithm = (
 
   index = getInitialIndex();
 
-  while (checkCondition(index)) {
+  while (canGoNext(index)) {
     // can't shrink more
     if (sizesOnResizeStart[index] === 0) {
       index = getNextIndex(index);

@@ -1,17 +1,60 @@
-import { ParentComponent, onMount } from 'solid-js';
-import { mergeProps, createMemo, createSignal, createComputed } from 'solid-js';
+import {
+  type Accessor,
+  type ParentComponent,
+  createEffect,
+  createComputed,
+  on,
+  onCleanup,
+  onMount,
+  untrack,
+  createRoot,
+  createContext,
+  mergeProps,
+  createMemo,
+  createSignal,
+} from 'solid-js';
+
 import { createStore, produce } from 'solid-js/store';
 import { Dynamic } from 'solid-js/web';
 
-import { useResize } from './hooks/use-resize';
-import { createPanelStore } from './store';
-import type { Direction, LayoutItem } from './types';
+import type { Direction, LayoutItem, ResolvedLayoutItem } from './types';
 
-import { PanelContext } from './context';
-import type { IPanelContext } from './context';
+import { newStateAlgorithm } from './store/algorithm';
 import { preprocessLayout } from './utils/preprocess-layout';
-import { CLASSNAMES } from './constants';
+import { CLASSNAMES, TOTAL_FLEX_GROW } from './constants';
 import { isHorizontalDirection } from './utils/direction';
+import { roundTo4Digits } from './utils/math';
+import { useTotalPanelSizePX } from './hooks/use-panel-size';
+import { createMouseDelta } from './utils/mouse-delta';
+import { makeLogText } from './utils/log';
+
+export interface Logger {
+  warn(message: string): void;
+  error(message: string): void;
+}
+
+export interface IPanelContext {
+  logger?: Logger;
+  registerPanel: (panelData: LayoutItem, index?: number) => void;
+  unregisterPanel: (panelId: string) => void;
+  useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
+  onPanelResize: (panelId: string, e: MouseEvent) => void;
+}
+
+export type PanelGroupAPI = {
+  getStaticLayout(): number[];
+  setLayout(layout: number[]): void;
+  /**
+   * Trying to collapse the panel to it's minSize
+   */
+  collapse(panelId: string): void;
+  /**
+   * Expand the panel to its maximum possible size
+   * You can also pass the size to expand the panel to
+   * (it should be between minSize and maxSize)
+   */
+  expand(panelId: string, expandSize?: number): void;
+};
 
 export interface PanelGroupProps {
   /**
@@ -22,13 +65,11 @@ export interface PanelGroupProps {
   /**
    * If the parent element has CSS zoom property
    * The zoom value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   zoom?: number;
   /**
    * If the parent element has CSS scale property
    * The scale value should be passed to eliminate visual bugs during resizing
-   * @default 1
    */
   scale?: number;
   /**
@@ -40,6 +81,15 @@ export interface PanelGroupProps {
    * Extra class passed to panel DOM element.
    */
   class?: string;
+  /**
+   * A logger to be used for diagnostic messages
+   */
+  logger?: Logger;
+  /**
+   * API setter for the parent component
+   * You can use this API to get and set the layout of the panels
+   */
+  setAPI?: (api: PanelGroupAPI) => void;
   /**
    * A callback called during resize
    */
@@ -70,87 +120,271 @@ export interface PanelGroupProps {
   ) => number[];
 }
 
+export const PanelContext = createContext<IPanelContext>();
+
+const isReverseDirection = (direction: Direction) => direction.includes('reverse');
+
+const createProcessedLayout = (logger?: Logger) => {
+  const [initialLayout, setInitialLayout] = createSignal<LayoutItem[]>([]);
+  const processedLayout = createMemo(() => preprocessLayout(initialLayout(), logger));
+
+  const addLayoutItem = (data: LayoutItem, index?: number) =>
+    setInitialLayout((layout) => {
+      const newLayout = [...layout];
+
+      if (index) newLayout.splice(index, 0, data);
+      else newLayout.push(data);
+
+      return newLayout;
+    });
+
+  const removeLayoutItem = (panelId: string) =>
+    setInitialLayout((layout) => layout.filter((data) => data.id !== panelId));
+
+  return { processedLayout, addLayoutItem, removeLayoutItem };
+};
+
 export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   const props = mergeProps(
     {
       tag: 'div',
-      zoom: 1,
-      scale: 1,
       direction: 'row' as Direction,
-    },
+      resizeAlgorithm: newStateAlgorithm,
+    } satisfies Partial<PanelGroupProps>,
     initialProps,
   );
 
   const [containerRef, setContainerRef] = createSignal<HTMLElement | undefined>();
-
-  const [initialLayout, setInitialLayout] = createStore<LayoutItem[]>([]);
-
-  const processedLayout = createMemo(() => preprocessLayout(initialLayout));
-
-  const { state, setConfig, updateLayout } = createPanelStore(
-    processedLayout(),
-    () => props.resizeAlgorithm,
-    props.onLayoutChange,
+  const { processedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
+  const [$state, setState] = createStore(
+    { currentLayout: processedLayout() },
+    { name: 'PanelStore' },
   );
 
-  createComputed(() => {
-    setConfig(processedLayout());
-  });
+  // Sync store with layout changes (like panel addition/removing)
+  createComputed(
+    on(
+      processedLayout,
+      (currentProcessedLayout) => setState({ currentLayout: currentProcessedLayout }),
+      {
+        defer: true,
+      },
+    ),
+  );
 
-  const registerPanel: IPanelContext['registerPanel'] = (data, index) =>
-    setInitialLayout(
-      produce((layout) => {
-        if (index) {
-          layout.splice(index, 0, data);
-        } else {
-          layout.push(data);
+  let firstCall = false;
+  createComputed(
+    on(
+      () => $state.currentLayout.map((item) => item.size),
+      (layout) => {
+        // TODO: DIRTY HACK, don't like it, come up with a better solution later
+        if (!firstCall) {
+          firstCall = true;
+          return;
         }
-      }),
-    );
 
-  const unregisterPanel: IPanelContext['unregisterPanel'] = (panelId) => {
-    setInitialLayout(
-      produce((layout) => {
-        layout = layout.filter((data) => data.id !== panelId);
-      }),
-    );
-  };
+        props.onLayoutChange?.(layout);
+      },
+      { defer: true },
+    ),
+  );
 
-  const useData: IPanelContext['useData'] = (panelId) =>
-    createMemo(() => state.layout.find((item) => item.id === panelId));
+  createComputed(
+    on(
+      () => props.setAPI,
+      (apiSetter) => {
+        if (!apiSetter) return;
 
-  const createMouseDownHandler = useResize({
-    zoom: () => props.zoom,
-    scale: () => props.scale,
-    direction: () => props.direction,
-    state: () => state,
-    containerRef,
-    updateLayout,
-  });
+        apiSetter({
+          getStaticLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
+          collapse: (panelId) =>
+            untrack(() => {
+              const panel = $state.currentLayout.find((item) => item.id === panelId);
 
-  const [isContentVisible, setContentVisible] = createSignal(false);
+              if (!panel) return;
+              if (panel.size === 0) return;
+
+              // try to collapse this panel and recompute layout
+              const newState = props
+                .resizeAlgorithm(
+                  $state.currentLayout,
+                  $state.currentLayout.map((item) => item.size),
+                  $state.currentLayout.findIndex((item) => item.id === panelId),
+                  -(panel.collapsible ? panel.size : panel.size - panel.minSize),
+                )
+                .map(roundTo4Digits);
+
+              setState(
+                produce((state) => {
+                  for (let i = 0; i < newState.length; i++)
+                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
+                }),
+              );
+            }),
+          expand: (panelId, size?: number) =>
+            untrack(() => {
+              const panel = $state.currentLayout.find((item) => item.id === panelId);
+
+              if (!panel) return;
+              if (!panel.collapsible) return;
+              if (panel.size !== 0) return;
+
+              const expandSize =
+                size !== undefined
+                  ? size >= panel.minSize && size <= panel.maxSize
+                    ? size
+                    : panel.size
+                  : panel.maxSize;
+
+              // try to expand this panel and recompute layout
+              const newState = props
+                .resizeAlgorithm(
+                  $state.currentLayout,
+                  $state.currentLayout.map((item) => item.size),
+                  $state.currentLayout.findIndex((item) => item.id === panelId),
+                  expandSize,
+                )
+                .map(roundTo4Digits);
+
+              setState(
+                produce((state) => {
+                  for (let i = 0; i < newState.length; i++)
+                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
+                }),
+              );
+            }),
+          setLayout: (sizes: number[]) =>
+            untrack(() => {
+              if ($state.currentLayout.length !== sizes.length) {
+                props.logger?.error(makeLogText('Layout and sizes length mismatch'));
+                return;
+              }
+              if (sizes.reduce((acc, size) => acc + size, 0) !== 100) {
+                props.logger?.error(makeLogText('Sizes should sum to 100 (100%)'));
+                return;
+              }
+              // Check minSize and maxSize
+              for (let i = 0; i < sizes.length; i++) {
+                if (sizes[i] < $state.currentLayout[i].minSize) {
+                  props.logger?.error(
+                    makeLogText(
+                      `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
+                    ),
+                  );
+                  return;
+                }
+                if (sizes[i] > $state.currentLayout[i].maxSize) {
+                  props.logger?.error(
+                    makeLogText(
+                      `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
+                    ),
+                  );
+                  return;
+                }
+              }
+
+              setState(
+                produce((state) => {
+                  for (let i = 0; i < sizes.length; i++) state.currentLayout[i].size = sizes[i];
+                }),
+              );
+            }),
+        });
+      },
+    ),
+  );
 
   // Removed flickering (when SSR)
   // The point is that initial sizes are not defined
   // So we need to mount elements and then compute their sizes
   // This causes flickering so we need to show the content only after mount
+  const [isContentVisible, setContentVisible] = createSignal(false);
   onMount(() => setContentVisible(true));
-
-  const contentVisibility = () => (isContentVisible() ? '' : 'hidden');
 
   return (
     <PanelContext.Provider
       value={{
-        registerPanel,
-        unregisterPanel,
-        useData,
-        createMouseDownHandler,
+        logger: props.logger,
+        registerPanel: addLayoutItem,
+        unregisterPanel: removeLayoutItem,
+        useData: (panelId) =>
+          createMemo(() => $state.currentLayout.find((item) => item.id === panelId)),
+        onPanelResize: (panelId: string, e: MouseEvent) => {
+          // Dispose this when the component is unmounted?
+          createRoot((dispose) => {
+            const mouseDelta = createMouseDelta({
+              zoom: () => props.zoom,
+              scale: () => props.scale,
+            });
+
+            mouseDelta.init(e);
+
+            const totalPanelSizePX = useTotalPanelSizePX(
+              containerRef,
+              () => $state.currentLayout.length,
+              () => props.direction,
+            );
+
+            const flexGrowOnResizeStart = $state.currentLayout.map((item) => item.size);
+            // There things are not reactive during resize
+            const isHorizontal = isHorizontalDirection(props.direction);
+            const reverseSign = isReverseDirection(props.direction) ? -1 : 1;
+
+            const deltaPX = () =>
+              (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) * reverseSign;
+
+            createEffect(
+              on(deltaPX, (currentDeltaPX) => {
+                const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
+
+                if (deltaFlexGrow !== 0) {
+                  const resizableItemIndex = $state.currentLayout.findIndex(
+                    (item) => item.id === panelId,
+                  );
+
+                  // TODO handle error somehow
+                  if (resizableItemIndex === -1) return;
+
+                  const newState = props
+                    .resizeAlgorithm(
+                      $state.currentLayout,
+                      flexGrowOnResizeStart,
+                      resizableItemIndex,
+                      deltaFlexGrow,
+                      // round values
+                    )
+                    .map(roundTo4Digits);
+
+                  setState(
+                    produce((state) => {
+                      for (let i = 0; i < newState.length; i++)
+                        if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
+                    }),
+                  );
+                }
+              }),
+            );
+
+            const handleMouseMove = (e: MouseEvent) => mouseDelta.updateMouseDelta(e);
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', dispose, { once: true });
+
+            onCleanup(() => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', dispose);
+            });
+          });
+        },
       }}
     >
       <Dynamic
         ref={setContainerRef}
         component={props.tag}
-        style={{ 'flex-direction': props.direction, visibility: contentVisibility() }}
+        style={{
+          'flex-direction': props.direction,
+          visibility: isContentVisible() ? '' : 'hidden',
+        }}
         classList={{
           [CLASSNAMES.panelGroup]: true,
           [CLASSNAMES.panelGroupVertical]: !isHorizontalDirection(props.direction),
