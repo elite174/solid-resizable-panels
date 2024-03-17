@@ -172,6 +172,23 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
     ),
   );
 
+  let firstCall = false;
+  createComputed(
+    on(
+      () => $state.currentLayout.map((item) => item.size),
+      (layout) => {
+        // TODO: DIRTY HACK, don't like it, come up with a better solution later
+        if (!firstCall) {
+          firstCall = true;
+          return;
+        }
+
+        props.onLayoutChange?.(layout);
+      },
+      { defer: true },
+    ),
+  );
+
   createComputed(
     on(
       () => props.setAPI,
@@ -344,10 +361,6 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
                         if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
                     }),
                   );
-
-                  // TODO: fix this!
-                  // don't call it layout was not changed
-                  props.onLayoutChange?.(newState);
                 }
               }),
             );
