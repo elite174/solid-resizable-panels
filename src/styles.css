@@ -1,3 +1,24 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  background-color: #eaeaea;
+}
+
+#root {
+  max-width: 800px;
+  margin: auto;
+
+  counter-reset: section;
+}
+
+h2:not(:first-of-type)::before {
+  counter-increment: section;
+  content: counter(section) ". ";
+}
+
+h2:not(:first-of-type) {
+  margin-top: 3rem;
+}
+
 .ResizeablePanelGroup {
   height: 400px;
   border: 1px solid red;
