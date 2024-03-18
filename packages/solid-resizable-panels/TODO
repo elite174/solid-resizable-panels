@@ -1,6 +1,0 @@
-- Add errors for the same panel ids
-- Improve errors
-- Support persistent layout (especially for conditional panels)
-- Support imperative API
-
-- Stop resize on direction change?
