@@ -1,14 +1,52 @@
 {
-  "name": "solid-panels-root",
+  "name": "solid-resizable-panels",
+  "version": "0.5.0",
+  "description": "Solid-js components for making resizable panels",
+  "author": "Vladislav Lipatov",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "solid": "./dist/index.js",
+      "import": "./dist/index.js",
+      "browser": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "private": false,
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elite174/solid-panels.git"
+  },
+  "bugs": {
+    "url": "https://github.com/elite174/solid-panels/issues"
+  },
+  "homepage": "https://github.com/elite174/solid-panels#readme",
   "scripts": {
-    "format": "prettier --write .",
-    "prepare": "husky install",
-    "list-staged": "lint-staged"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "husky": "^8.0.3",
-    "lint-staged": "^13.2.0",
-    "prettier": "^2.8.7",
-    "typescript": "^5.0.3"
+    "solid-js": "^1.7.0",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vite-plugin-dts": "^3.7.3",
+    "vite-plugin-solid": "^2.10.2",
+    "vite-plugin-static-copy": "^1.0.1"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.7"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
