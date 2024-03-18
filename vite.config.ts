@@ -22,13 +22,14 @@ export default defineConfig({
   build: {
     lib: {
       entry: "src/lib/index.ts",
+      fileName: "index",
       formats: ["es"],
     },
     emptyOutDir: true,
     outDir: "dist",
     minify: false,
     rollupOptions: {
-      external: ["solid-js", "solid-js/web"],
+      external: ["solid-js", "solid-js/web", "solid-js/store"],
     },
   },
 });
