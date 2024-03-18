@@ -32,7 +32,8 @@
   "homepage": "https://github.com/elite174/solid-panels#readme",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build:lib": "vite build",
+    "build": "vite build -c vite-app.config.ts",
     "preview": "vite preview"
   },
   "devDependencies": {
