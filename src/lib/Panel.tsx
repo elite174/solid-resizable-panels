@@ -64,6 +64,8 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
 
   const context = useContext(PanelContext);
 
+  console.log(context);
+
   if (!context)
     throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
 
