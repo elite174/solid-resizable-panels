@@ -36,11 +36,19 @@ const TestApp = () => {
 ## Types
 
 ```ts
-import type { ParentComponent } from "solid-js";
+import { ParentComponent } from "solid-js";
 
-declare type Direction = "row" | "column" | "row-reverse" | "column-reverse";
+export declare type Direction = "row" | "column" | "row-reverse" | "column-reverse";
 
-declare interface Logger {
+export declare type LayoutItem = {
+  id: string;
+  size?: number;
+  minSize: number;
+  maxSize: number;
+  collapsible: boolean;
+};
+
+export declare interface Logger {
   warn(message: string): void;
   error(message: string): void;
 }
@@ -49,7 +57,7 @@ export declare const Panel: ParentComponent<PanelProps>;
 
 export declare const PanelGroup: ParentComponent<PanelGroupProps>;
 
-declare type PanelGroupAPI = {
+export declare type PanelGroupAPI = {
   /**
    * Returns the current layout of the panels
    */
@@ -198,4 +206,6 @@ export declare interface ResizeHandleProps {
    */
   class?: string;
 }
+
+export declare type ResolvedLayoutItem = Required<LayoutItem>;
 ```
