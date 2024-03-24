@@ -1,5 +1,5 @@
 import type { ParentComponent } from "solid-js";
-import { createComputed, createMemo, mergeProps, on, onCleanup, onMount, untrack, useContext } from "solid-js";
+import { createEffect, createMemo, mergeProps, on, onCleanup, onMount, untrack, useContext } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from "./constants";
@@ -69,38 +69,6 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
 
   const panelSize = createMemo(() => getPanelSize(props.id));
 
-  createComputed(
-    on(
-      panelSize,
-      (currentPanelSize) => {
-        if (currentPanelSize !== undefined) props.onResize?.(currentPanelSize);
-      },
-      { defer: true }
-    )
-  );
-
-  // Effect for calling onExpand and onCollapse callbacks
-  createComputed(() => {
-    if (!props.collapsible) return;
-
-    createComputed(
-      on(
-        panelSize,
-        (currentSize, previousSize) => {
-          if (currentSize === undefined || previousSize === undefined) return;
-
-          if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
-
-          if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
-
-          return currentSize;
-        },
-        { defer: true }
-      ),
-      untrack(panelSize)
-    );
-  });
-
   onMount(() => {
     const panelId = props.id;
 
@@ -116,6 +84,41 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
     );
 
     onCleanup(() => unregisterPanel(panelId));
+  });
+
+  // we can start tracking events after mount
+  onMount(() => {
+    createEffect(
+      on(
+        panelSize,
+        (currentPanelSize) => {
+          if (currentPanelSize !== undefined) props.onResize?.(currentPanelSize);
+        },
+        { defer: true }
+      )
+    );
+
+    // Effect for calling onExpand and onCollapse callbacks
+    createEffect(() => {
+      if (!props.collapsible) return;
+
+      createEffect(
+        on(
+          panelSize,
+          (currentSize, previousSize) => {
+            if (currentSize === undefined || previousSize === undefined) return;
+
+            if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
+
+            if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
+
+            return currentSize;
+          },
+          { defer: true }
+        ),
+        untrack(panelSize)
+      );
+    });
   });
 
   // Actually we may not render this until the data is computed,

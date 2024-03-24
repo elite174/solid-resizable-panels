@@ -34,8 +34,8 @@ const EXAMPLES: { ExampleComponent: VoidComponent; title: string; slug: string }
     ExampleComponent: () => (
       <CodeExample
         ExampleComponent={() => (
-          <PanelGroup>
-            <Panel id="1">Panel 1</Panel>
+          <PanelGroup onLayoutChange={console.log}>
+            <Panel id="1" onResize={console.log} onCollapse={()=>console.log('c')} initialSize={0} collapsible>Panel 1</Panel>
             <ResizeHandle />
             <Panel id="2">Panel 2</Panel>
             <ResizeHandle />

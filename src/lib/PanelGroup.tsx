@@ -181,7 +181,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   // until then we can't do anything with layout
   onMount(() => {
     // Start listen to layout changes
-    createComputed(
+    createEffect(
       on(
         () => $processedLayout.map((item) => item.size),
         (layout) => props.onLayoutChange?.(layout),
@@ -189,7 +189,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
       )
     );
 
-    createComputed(
+    createEffect(
       on(
         () => props.setAPI,
         (apiSetter) => {
