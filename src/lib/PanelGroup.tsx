@@ -36,7 +36,7 @@ export interface IPanelContext {
   registerPanel: (panelData: LayoutItem, index?: number) => void;
   unregisterPanel: (panelId: string) => void;
   getPanelSize: (panelId: string) => number | undefined;
-  onPanelResize: (panelId: string, e: MouseEvent) => void;
+  onPanelResizeStart: (panelId: string, e: MouseEvent) => void;
 }
 
 export type PanelGroupAPI = {
@@ -146,7 +146,7 @@ const createProcessedLayout = (logger?: Logger) => {
     setInitialLayout((layout) => {
       const newLayout = [...layout];
 
-      if (index) newLayout.splice(index, 0, data);
+      if (index !== undefined) newLayout.splice(index, 0, data);
       else newLayout.push(data);
 
       return newLayout;
@@ -162,129 +162,10 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   const props = mergeProps(
     {
       tag: "div",
-      direction: "row" as Direction,
+      direction: "row",
       resizeAlgorithm: RESIZE_ALGORITHM,
     } satisfies Partial<PanelGroupProps>,
     initialProps
-  );
-
-  const [containerRef, setContainerRef] = createSignal<HTMLElement | undefined>();
-  const { $processedLayout, setProcessedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
-
-  let firstCall = false;
-  createComputed(
-    on(
-      () => $processedLayout.map((item) => item.size),
-      (layout) => {
-        // TODO: DIRTY HACK, don't like it, come up with a better solution later
-        if (!firstCall) {
-          firstCall = true;
-          return;
-        }
-
-        props.onLayoutChange?.(layout);
-      },
-      { defer: true }
-    )
-  );
-
-  createComputed(
-    on(
-      () => props.setAPI,
-      (apiSetter) => {
-        if (!apiSetter) return;
-
-        apiSetter({
-          getLayout: () => untrack(() => $processedLayout.map((item) => item.size)),
-          collapse: (panelId) =>
-            untrack(() => {
-              const panel = $processedLayout.find((item) => item.id === panelId);
-
-              if (!panel) return;
-              if (panel.size === 0) return;
-
-              // try to collapse this panel and recompute layout
-              const newState = props
-                .resizeAlgorithm(
-                  $processedLayout,
-                  $processedLayout.map((item) => item.size),
-                  $processedLayout.findIndex((item) => item.id === panelId),
-                  -(panel.collapsible ? panel.size : panel.size - panel.minSize)
-                )
-                .map(roundTo4Digits);
-
-              setProcessedLayout(
-                produce((layout) => {
-                  for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
-                })
-              );
-            }),
-          expand: (panelId, sizeToExpand?: number) =>
-            untrack(() => {
-              const panel = $processedLayout.find((item) => item.id === panelId);
-
-              if (!panel) return;
-              if (!panel.collapsible) return;
-              if (panel.size !== 0) return;
-
-              const expandSize =
-                sizeToExpand !== undefined
-                  ? sizeToExpand >= panel.minSize && sizeToExpand <= panel.maxSize
-                    ? sizeToExpand
-                    : panel.size
-                  : panel.maxSize;
-
-              // try to expand this panel and recompute layout
-              const newState = props
-                .resizeAlgorithm(
-                  $processedLayout,
-                  $processedLayout.map((item) => item.size),
-                  $processedLayout.findIndex((item) => item.id === panelId),
-                  expandSize
-                )
-                .map(roundTo4Digits);
-
-              setProcessedLayout(
-                produce((layout) => {
-                  for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
-                })
-              );
-            }),
-          setLayout: (sizes: number[]) =>
-            untrack(() => {
-              if ($processedLayout.length !== sizes.length) {
-                props.logger?.error(makeLogText("Layout and sizes length mismatch"));
-                return;
-              }
-              if (sizes.reduce((acc, size) => acc + size, 0) !== 100) {
-                props.logger?.error(makeLogText("Sizes should sum to 100 (100%)"));
-                return;
-              }
-              // Check minSize and maxSize
-              for (let i = 0; i < sizes.length; i++) {
-                if (sizes[i] < $processedLayout[i].minSize) {
-                  props.logger?.error(
-                    makeLogText(`Size ${sizes[i]} is less than minSize ${$processedLayout[i].minSize}`)
-                  );
-                  return;
-                }
-                if (sizes[i] > $processedLayout[i].maxSize) {
-                  props.logger?.error(
-                    makeLogText(`Size ${sizes[i]} is greater than maxSize ${$processedLayout[i].maxSize}`)
-                  );
-                  return;
-                }
-              }
-
-              setProcessedLayout(
-                produce((layout) => {
-                  for (let i = 0; i < sizes.length; i++) layout[i].size = sizes[i];
-                })
-              );
-            }),
-        });
-      }
-    )
   );
 
   // Removed flickering (when SSR)
@@ -292,7 +173,123 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   // So we need to mount elements and then compute their sizes
   // This causes flickering so we need to show the content only after mount
   const [isContentVisible, setContentVisible] = createSignal(false);
-  onMount(() => setContentVisible(true));
+
+  const [containerRef, setContainerRef] = createSignal<HTMLElement | undefined>();
+  const { $processedLayout, setProcessedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
+
+  // layout is only computed when all panels are mounted.
+  // until then we can't do anything with layout
+  onMount(() => {
+    // Start listen to layout changes
+    createComputed(
+      on(
+        () => $processedLayout.map((item) => item.size),
+        (layout) => props.onLayoutChange?.(layout),
+        { defer: true }
+      )
+    );
+
+    createComputed(
+      on(
+        () => props.setAPI,
+        (apiSetter) => {
+          if (!apiSetter) return;
+
+          apiSetter({
+            getLayout: () => untrack(() => $processedLayout.map((item) => item.size)),
+            collapse: (panelId) =>
+              untrack(() => {
+                const panel = $processedLayout.find((item) => item.id === panelId);
+
+                if (!panel) return;
+                if (panel.size === 0) return;
+
+                // try to collapse this panel and recompute layout
+                const newState = props
+                  .resizeAlgorithm(
+                    $processedLayout,
+                    $processedLayout.map((item) => item.size),
+                    $processedLayout.findIndex((item) => item.id === panelId),
+                    -(panel.collapsible ? panel.size : panel.size - panel.minSize)
+                  )
+                  .map(roundTo4Digits);
+
+                setProcessedLayout(
+                  produce((layout) => {
+                    for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
+                  })
+                );
+              }),
+            expand: (panelId, sizeToExpand?: number) =>
+              untrack(() => {
+                const panel = $processedLayout.find((item) => item.id === panelId);
+
+                if (!panel) return;
+                if (!panel.collapsible) return;
+                if (panel.size !== 0) return;
+
+                const expandSize =
+                  sizeToExpand !== undefined
+                    ? sizeToExpand >= panel.minSize && sizeToExpand <= panel.maxSize
+                      ? sizeToExpand
+                      : panel.size
+                    : panel.maxSize;
+
+                // try to expand this panel and recompute layout
+                const newState = props
+                  .resizeAlgorithm(
+                    $processedLayout,
+                    $processedLayout.map((item) => item.size),
+                    $processedLayout.findIndex((item) => item.id === panelId),
+                    expandSize
+                  )
+                  .map(roundTo4Digits);
+
+                setProcessedLayout(
+                  produce((layout) => {
+                    for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
+                  })
+                );
+              }),
+            setLayout: (sizes: number[]) =>
+              untrack(() => {
+                if ($processedLayout.length !== sizes.length) {
+                  props.logger?.error(makeLogText("Layout and sizes length mismatch"));
+                  return;
+                }
+                if (sizes.reduce((acc, size) => acc + size, 0) !== 100) {
+                  props.logger?.error(makeLogText("Sizes should sum to 100 (100%)"));
+                  return;
+                }
+                // Check minSize and maxSize
+                for (let i = 0; i < sizes.length; i++) {
+                  if (sizes[i] < $processedLayout[i].minSize) {
+                    props.logger?.error(
+                      makeLogText(`Size ${sizes[i]} is less than minSize ${$processedLayout[i].minSize}`)
+                    );
+                    return;
+                  }
+                  if (sizes[i] > $processedLayout[i].maxSize) {
+                    props.logger?.error(
+                      makeLogText(`Size ${sizes[i]} is greater than maxSize ${$processedLayout[i].maxSize}`)
+                    );
+                    return;
+                  }
+                }
+
+                setProcessedLayout(
+                  produce((layout) => {
+                    for (let i = 0; i < sizes.length; i++) layout[i].size = sizes[i];
+                  })
+                );
+              }),
+          });
+        }
+      )
+    );
+
+    setContentVisible(true);
+  });
 
   return (
     <PanelContext.Provider
@@ -303,7 +300,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         // Size can be unresolved, because layout has not been computed yet
         // TODO: find a way to get rid of these checks
         getPanelSize: (panelId) => $processedLayout.find((item) => item.id === panelId)?.size,
-        onPanelResize: (panelId: string, e: MouseEvent) => {
+        onPanelResizeStart: (panelId: string, e: MouseEvent) => {
           // Dispose this when the component is unmounted?
           createRoot((dispose) => {
             const mouseDelta = createMouseDelta({

@@ -63,7 +63,7 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
             ? resizeHandleElement.nextElementSibling?.getAttribute(SOLID_PANEL_ID_ATTRIBUTE_NAME)
             : null;
 
-        if (panelId && nextPanelId) context.onPanelResize(panelId, e);
+        if (panelId && nextPanelId) context.onPanelResizeStart(panelId, e);
       }}
     >
       {props.children}
