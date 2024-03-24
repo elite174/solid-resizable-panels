@@ -1,31 +1,48 @@
-import type { ResolvedLayoutItem } from '../types';
-import { EPSILON, clamp, isZero } from '../utils/math';
+import type { ResolvedLayoutItem } from "../types";
 
-export const RESIZE_ALGORITHM = (
+const EPSILON = 0.000001;
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+
+const isZero = (value: number) => Math.abs(value) < EPSILON;
+
+export type ResizeAlgorithm = (
+  /** Current state of layout */
   resolvedLayout: ResolvedLayoutItem[],
   sizesOnResizeStart: number[],
   resizableItemIndex: number,
-  deltaSize: number,
-): number[] => {
+  /**
+   * Delta size is computed from the initial size (before resize) and current state
+   */
+  deltaSize: number
+) => number[];
+
+export const RESIZE_ALGORITHM: ResizeAlgorithm = (
+  /** Current state of layout */
+  resolvedLayout,
+  sizesOnResizeStart,
+  resizableItemIndex,
+  deltaSize
+) => {
   if (resizableItemIndex === resolvedLayout.length - 1) {
     resizableItemIndex--;
     deltaSize = -deltaSize;
   }
 
   let updatedSizes = sizesOnResizeStart.slice();
-  const resizeDirection = Math.sign(deltaSize) === 1 ? 'right' : 'left';
+  const resizeDirection = Math.sign(deltaSize) === 1 ? "right" : "left";
   const totalBudget = Math.abs(deltaSize);
-  const sign = (resizeDirection === 'left' ? -1 : 1) * Math.sign(deltaSize);
+  const sign = (resizeDirection === "left" ? -1 : 1) * Math.sign(deltaSize);
 
   const itemCount = resolvedLayout.length;
 
   // try to enlarge nearest item from the opposite side
-  const nextItemIndex = resizeDirection === 'left' ? resizableItemIndex + 1 : resizableItemIndex;
+  const nextItemIndex = resizeDirection === "left" ? resizableItemIndex + 1 : resizableItemIndex;
   const nextItemVirtualSize = sizesOnResizeStart[nextItemIndex] + sign * totalBudget;
   const nextItemActualSize = clamp(
     nextItemVirtualSize,
     resolvedLayout[nextItemIndex].minSize,
-    resolvedLayout[nextItemIndex].maxSize,
+    resolvedLayout[nextItemIndex].maxSize
   );
 
   // if next item is collapsed
@@ -42,17 +59,15 @@ export const RESIZE_ALGORITHM = (
   // We have some budget to spend on changing the sizes
   let remainingBudget = Math.min(
     resolvedLayout[nextItemIndex].maxSize - sizesOnResizeStart[nextItemIndex],
-    totalBudget,
+    totalBudget
   );
   let spentBudget = 0;
 
   // I tried to generalize the algorithm for both directions
   // That's why we need this
-  const getInitialIndex = () =>
-    resizeDirection === 'left' ? resizableItemIndex : resizableItemIndex + 1;
-  const canGoNext = (index: number) =>
-    resizeDirection === 'left' ? index >= 0 : index < itemCount;
-  const getNextIndex = (index: number) => (resizeDirection === 'left' ? index - 1 : index + 1);
+  const getInitialIndex = () => (resizeDirection === "left" ? resizableItemIndex : resizableItemIndex + 1);
+  const canGoNext = (index: number) => (resizeDirection === "left" ? index >= 0 : index < itemCount);
+  const getNextIndex = (index: number) => (resizeDirection === "left" ? index - 1 : index + 1);
 
   let index = getInitialIndex();
 
@@ -68,11 +83,7 @@ export const RESIZE_ALGORITHM = (
     // Minus here because we go to another direction
     const virtualSize = sizesOnResizeStart[index] - sign * remainingBudget;
 
-    const actualSize = clamp(
-      virtualSize,
-      resolvedLayout[index].minSize,
-      resolvedLayout[index].maxSize,
-    );
+    const actualSize = clamp(virtualSize, resolvedLayout[index].minSize, resolvedLayout[index].maxSize);
 
     const deltaSpent = sizesOnResizeStart[index] - actualSize;
 
@@ -123,11 +134,9 @@ export const RESIZE_ALGORITHM = (
     updatedSizes[nextItemIndex] = clamp(
       sizesOnResizeStart[nextItemIndex] + sign * spentBudget,
       resolvedLayout[nextItemIndex].minSize,
-      resolvedLayout[nextItemIndex].maxSize,
+      resolvedLayout[nextItemIndex].maxSize
     );
   }
 
   return updatedSizes;
 };
-
-export type ResizeAlgorithm = typeof RESIZE_ALGORITHM;

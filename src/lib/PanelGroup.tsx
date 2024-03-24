@@ -17,7 +17,7 @@ import { Dynamic } from "solid-js/web";
 
 import type { Direction, LayoutItem } from "./types";
 
-import { RESIZE_ALGORITHM } from "./resize-algorithm/algorithm";
+import { RESIZE_ALGORITHM, type ResizeAlgorithm } from "./resize-algorithm/algorithm";
 import { preprocessLayout } from "./utils/preprocess-layout";
 import { CLASSNAMES, TOTAL_FLEX_GROW } from "./constants";
 import { isHorizontalDirection } from "./utils/direction";
@@ -106,25 +106,7 @@ export interface PanelGroupProps {
    *
    * @returns The sizes of the items on the current resize event (mousemove or touchmove)
    */
-  resizeAlgorithm?: (
-    /** Current state of layout */
-    resolvedLayout: {
-      id: string;
-      size: number;
-      /** A number from 0 to 100 */
-      minSize: number;
-      /** A number from 0 to 100 */
-      maxSize: number;
-      collapsible: boolean;
-    }[],
-    /** Sizes on resize start */
-    sizesOnResizeStart: number[],
-    resizableItemIndex: number,
-    /**
-     * Delta size is computed from the initial size (before resize) and current state
-     */
-    deltaSize: number
-  ) => number[];
+  resizeAlgorithm?: ResizeAlgorithm;
 }
 
 export const PanelContext = createContext<IPanelContext>();
