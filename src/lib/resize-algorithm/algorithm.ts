@@ -1,7 +1,7 @@
 import type { ResolvedLayoutItem } from '../types';
 import { EPSILON, clamp, isZero } from '../utils/math';
 
-export const newStateAlgorithm = (
+export const RESIZE_ALGORITHM = (
   resolvedLayout: ResolvedLayoutItem[],
   sizesOnResizeStart: number[],
   resizableItemIndex: number,
@@ -130,4 +130,4 @@ export const newStateAlgorithm = (
   return updatedSizes;
 };
 
-export type ResizeAlgorithm = typeof newStateAlgorithm;
+export type ResizeAlgorithm = typeof RESIZE_ALGORITHM;

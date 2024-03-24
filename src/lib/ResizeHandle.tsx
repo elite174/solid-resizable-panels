@@ -31,7 +31,6 @@ export const ResizeHandle: ParentComponent<ResizeHandleProps> = (initialProps) =
   const props = mergeProps({ tag: 'button', disabled: false }, initialProps);
 
   const context = useContext(PanelContext);
-
   if (!context)
     throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
 

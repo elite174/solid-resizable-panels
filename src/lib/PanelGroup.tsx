@@ -1,5 +1,4 @@
 import {
-  type Accessor,
   type ParentComponent,
   createEffect,
   createComputed,
@@ -10,23 +9,22 @@ import {
   createRoot,
   createContext,
   mergeProps,
-  createMemo,
   createSignal,
-} from 'solid-js';
+} from "solid-js";
 
-import { createStore, produce } from 'solid-js/store';
-import { Dynamic } from 'solid-js/web';
+import { createStore, produce } from "solid-js/store";
+import { Dynamic } from "solid-js/web";
 
-import type { Direction, LayoutItem, ResolvedLayoutItem } from './types';
+import type { Direction, LayoutItem } from "./types";
 
-import { newStateAlgorithm } from './store/algorithm';
-import { preprocessLayout } from './utils/preprocess-layout';
-import { CLASSNAMES, TOTAL_FLEX_GROW } from './constants';
-import { isHorizontalDirection } from './utils/direction';
-import { roundTo4Digits } from './utils/math';
-import { createTotalPanelSizePX } from './hooks/create-total-panel-size';
-import { createMouseDelta } from './utils/mouse-delta';
-import { makeLogText } from './utils/log';
+import { RESIZE_ALGORITHM } from "./resize-algorithm/algorithm";
+import { preprocessLayout } from "./utils/preprocess-layout";
+import { CLASSNAMES, TOTAL_FLEX_GROW } from "./constants";
+import { isHorizontalDirection } from "./utils/direction";
+import { roundTo4Digits } from "./utils/math";
+import { createTotalPanelSizePX } from "./hooks/create-total-panel-size";
+import { createMouseDelta } from "./utils/mouse-delta";
+import { makeLogText } from "./utils/log";
 
 export interface Logger {
   warn(message: string): void;
@@ -37,7 +35,7 @@ export interface IPanelContext {
   logger?: Logger;
   registerPanel: (panelData: LayoutItem, index?: number) => void;
   unregisterPanel: (panelId: string) => void;
-  useData: (panelId: string) => Accessor<ResolvedLayoutItem | undefined>;
+  getPanelSize: (panelId: string) => number | undefined;
   onPanelResize: (panelId: string, e: MouseEvent) => void;
 }
 
@@ -113,7 +111,9 @@ export interface PanelGroupProps {
     resolvedLayout: {
       id: string;
       size: number;
+      /** A number from 0 to 100 */
       minSize: number;
+      /** A number from 0 to 100 */
       maxSize: number;
       collapsible: boolean;
     }[],
@@ -123,17 +123,24 @@ export interface PanelGroupProps {
     /**
      * Delta size is computed from the initial size (before resize) and current state
      */
-    deltaSize: number,
+    deltaSize: number
   ) => number[];
 }
 
 export const PanelContext = createContext<IPanelContext>();
 
-const isReverseDirection = (direction: Direction) => direction.endsWith('reverse');
+const isReverseDirection = (direction: Direction) => direction.endsWith("reverse");
 
 const createProcessedLayout = (logger?: Logger) => {
   const [initialLayout, setInitialLayout] = createSignal<LayoutItem[]>([]);
-  const processedLayout = createMemo(() => preprocessLayout(initialLayout(), logger));
+  const [$processedLayout, setProcessedLayout] = createStore(preprocessLayout(initialLayout(), logger));
+
+  // Sync store with layout changes (like panel addition/removing)
+  createComputed(
+    on(initialLayout, (layoutToProcess) => setProcessedLayout(preprocessLayout(layoutToProcess)), {
+      defer: true,
+    })
+  );
 
   const addLayoutItem = (data: LayoutItem, index?: number) =>
     setInitialLayout((layout) => {
@@ -148,41 +155,26 @@ const createProcessedLayout = (logger?: Logger) => {
   const removeLayoutItem = (panelId: string) =>
     setInitialLayout((layout) => layout.filter((data) => data.id !== panelId));
 
-  return { processedLayout, addLayoutItem, removeLayoutItem };
+  return { $processedLayout, setProcessedLayout, addLayoutItem, removeLayoutItem };
 };
 
 export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
   const props = mergeProps(
     {
-      tag: 'div',
-      direction: 'row' as Direction,
-      resizeAlgorithm: newStateAlgorithm,
+      tag: "div",
+      direction: "row" as Direction,
+      resizeAlgorithm: RESIZE_ALGORITHM,
     } satisfies Partial<PanelGroupProps>,
-    initialProps,
+    initialProps
   );
 
   const [containerRef, setContainerRef] = createSignal<HTMLElement | undefined>();
-  const { processedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
-  const [$state, setState] = createStore(
-    { currentLayout: processedLayout() },
-    { name: 'PanelStore' },
-  );
-
-  // Sync store with layout changes (like panel addition/removing)
-  createComputed(
-    on(
-      processedLayout,
-      (currentProcessedLayout) => setState({ currentLayout: currentProcessedLayout }),
-      {
-        defer: true,
-      },
-    ),
-  );
+  const { $processedLayout, setProcessedLayout, addLayoutItem, removeLayoutItem } = createProcessedLayout(props.logger);
 
   let firstCall = false;
   createComputed(
     on(
-      () => $state.currentLayout.map((item) => item.size),
+      () => $processedLayout.map((item) => item.size),
       (layout) => {
         // TODO: DIRTY HACK, don't like it, come up with a better solution later
         if (!firstCall) {
@@ -192,8 +184,8 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
         props.onLayoutChange?.(layout);
       },
-      { defer: true },
-    ),
+      { defer: true }
+    )
   );
 
   createComputed(
@@ -203,10 +195,10 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         if (!apiSetter) return;
 
         apiSetter({
-          getLayout: () => untrack(() => $state.currentLayout.map((item) => item.size)),
+          getLayout: () => untrack(() => $processedLayout.map((item) => item.size)),
           collapse: (panelId) =>
             untrack(() => {
-              const panel = $state.currentLayout.find((item) => item.id === panelId);
+              const panel = $processedLayout.find((item) => item.id === panelId);
 
               if (!panel) return;
               if (panel.size === 0) return;
@@ -214,91 +206,85 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
               // try to collapse this panel and recompute layout
               const newState = props
                 .resizeAlgorithm(
-                  $state.currentLayout,
-                  $state.currentLayout.map((item) => item.size),
-                  $state.currentLayout.findIndex((item) => item.id === panelId),
-                  -(panel.collapsible ? panel.size : panel.size - panel.minSize),
+                  $processedLayout,
+                  $processedLayout.map((item) => item.size),
+                  $processedLayout.findIndex((item) => item.id === panelId),
+                  -(panel.collapsible ? panel.size : panel.size - panel.minSize)
                 )
                 .map(roundTo4Digits);
 
-              setState(
-                produce((state) => {
-                  for (let i = 0; i < newState.length; i++)
-                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
-                }),
+              setProcessedLayout(
+                produce((layout) => {
+                  for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
+                })
               );
             }),
-          expand: (panelId, size?: number) =>
+          expand: (panelId, sizeToExpand?: number) =>
             untrack(() => {
-              const panel = $state.currentLayout.find((item) => item.id === panelId);
+              const panel = $processedLayout.find((item) => item.id === panelId);
 
               if (!panel) return;
               if (!panel.collapsible) return;
               if (panel.size !== 0) return;
 
               const expandSize =
-                size !== undefined
-                  ? size >= panel.minSize && size <= panel.maxSize
-                    ? size
+                sizeToExpand !== undefined
+                  ? sizeToExpand >= panel.minSize && sizeToExpand <= panel.maxSize
+                    ? sizeToExpand
                     : panel.size
                   : panel.maxSize;
 
               // try to expand this panel and recompute layout
               const newState = props
                 .resizeAlgorithm(
-                  $state.currentLayout,
-                  $state.currentLayout.map((item) => item.size),
-                  $state.currentLayout.findIndex((item) => item.id === panelId),
-                  expandSize,
+                  $processedLayout,
+                  $processedLayout.map((item) => item.size),
+                  $processedLayout.findIndex((item) => item.id === panelId),
+                  expandSize
                 )
                 .map(roundTo4Digits);
 
-              setState(
-                produce((state) => {
-                  for (let i = 0; i < newState.length; i++)
-                    if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
-                }),
+              setProcessedLayout(
+                produce((layout) => {
+                  for (let i = 0; i < newState.length; i++) layout[i].size = newState[i];
+                })
               );
             }),
           setLayout: (sizes: number[]) =>
             untrack(() => {
-              if ($state.currentLayout.length !== sizes.length) {
-                props.logger?.error(makeLogText('Layout and sizes length mismatch'));
+              if ($processedLayout.length !== sizes.length) {
+                props.logger?.error(makeLogText("Layout and sizes length mismatch"));
                 return;
               }
               if (sizes.reduce((acc, size) => acc + size, 0) !== 100) {
-                props.logger?.error(makeLogText('Sizes should sum to 100 (100%)'));
+                props.logger?.error(makeLogText("Sizes should sum to 100 (100%)"));
                 return;
               }
               // Check minSize and maxSize
               for (let i = 0; i < sizes.length; i++) {
-                if (sizes[i] < $state.currentLayout[i].minSize) {
+                if (sizes[i] < $processedLayout[i].minSize) {
                   props.logger?.error(
-                    makeLogText(
-                      `Size ${sizes[i]} is less than minSize ${$state.currentLayout[i].minSize}`,
-                    ),
+                    makeLogText(`Size ${sizes[i]} is less than minSize ${$processedLayout[i].minSize}`)
                   );
                   return;
                 }
-                if (sizes[i] > $state.currentLayout[i].maxSize) {
+                if (sizes[i] > $processedLayout[i].maxSize) {
                   props.logger?.error(
-                    makeLogText(
-                      `Size ${sizes[i]} is greater than maxSize ${$state.currentLayout[i].maxSize}`,
-                    ),
+                    makeLogText(`Size ${sizes[i]} is greater than maxSize ${$processedLayout[i].maxSize}`)
                   );
                   return;
                 }
               }
 
-              setState(
-                produce((state) => {
-                  for (let i = 0; i < sizes.length; i++) state.currentLayout[i].size = sizes[i];
-                }),
+              setProcessedLayout(
+                produce((layout) => {
+                  for (let i = 0; i < sizes.length; i++) layout[i].size = sizes[i];
+                })
               );
             }),
         });
-      },
-    ),
+      }
+    )
   );
 
   // Removed flickering (when SSR)
@@ -314,8 +300,9 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         logger: props.logger,
         registerPanel: addLayoutItem,
         unregisterPanel: removeLayoutItem,
-        useData: (panelId) =>
-          createMemo(() => $state.currentLayout.find((item) => item.id === panelId)),
+        // Size can be unresolved, because layout has not been computed yet
+        // TODO: find a way to get rid of these checks
+        getPanelSize: (panelId) => $processedLayout.find((item) => item.id === panelId)?.size,
         onPanelResize: (panelId: string, e: MouseEvent) => {
           // Dispose this when the component is unmounted?
           createRoot((dispose) => {
@@ -328,58 +315,55 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
             const totalPanelSizePX = createTotalPanelSizePX(
               containerRef,
-              () => $state.currentLayout.length,
-              () => props.direction,
+              () => $processedLayout.length,
+              () => props.direction
             );
 
-            const flexGrowOnResizeStart = $state.currentLayout.map((item) => item.size);
+            const flexGrowOnResizeStart = $processedLayout.map((item) => item.size);
             // There things are not reactive during resize
             const isHorizontal = isHorizontalDirection(props.direction);
             const reverseSign = isReverseDirection(props.direction) ? -1 : 1;
 
-            const deltaPX = () =>
-              (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) * reverseSign;
+            const deltaPX = () => (isHorizontal ? mouseDelta.deltaX() : mouseDelta.deltaY()) * reverseSign;
 
             createEffect(
               on(deltaPX, (currentDeltaPX) => {
                 const deltaFlexGrow = (currentDeltaPX * TOTAL_FLEX_GROW) / totalPanelSizePX();
 
                 if (deltaFlexGrow !== 0) {
-                  const resizableItemIndex = $state.currentLayout.findIndex(
-                    (item) => item.id === panelId,
-                  );
+                  const resizableItemIndex = $processedLayout.findIndex((item) => item.id === panelId);
 
                   // TODO handle error somehow
                   if (resizableItemIndex === -1) return;
 
                   const newState = props
                     .resizeAlgorithm(
-                      $state.currentLayout,
+                      $processedLayout,
                       flexGrowOnResizeStart,
                       resizableItemIndex,
-                      deltaFlexGrow,
+                      deltaFlexGrow
                       // round values
                     )
                     .map(roundTo4Digits);
 
-                  setState(
-                    produce((state) => {
+                  setProcessedLayout(
+                    produce((layout) => {
                       for (let i = 0; i < newState.length; i++)
-                        if (newState[i] !== undefined) state.currentLayout[i].size = newState[i];
-                    }),
+                        if (newState[i] !== undefined) layout[i].size = newState[i];
+                    })
                   );
                 }
-              }),
+              })
             );
 
             const handleMouseMove = (e: MouseEvent) => mouseDelta.updateMouseDelta(e);
 
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', dispose, { once: true });
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", dispose, { once: true });
 
             onCleanup(() => {
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', dispose);
+              document.removeEventListener("mousemove", handleMouseMove);
+              document.removeEventListener("mouseup", dispose);
             });
           });
         },
@@ -389,13 +373,13 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
         ref={setContainerRef}
         component={props.tag}
         style={{
-          'flex-direction': props.direction,
-          visibility: isContentVisible() ? '' : 'hidden',
+          "flex-direction": props.direction,
+          visibility: isContentVisible() ? "" : "hidden",
         }}
         classList={{
           [CLASSNAMES.panelGroup]: true,
           [CLASSNAMES.panelGroupVertical]: !isHorizontalDirection(props.direction),
-          [props.class ?? '']: true,
+          [props.class ?? ""]: true,
         }}
       >
         {props.children}

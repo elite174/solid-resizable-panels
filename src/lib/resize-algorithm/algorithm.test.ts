@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 
-import { newStateAlgorithm } from './algorithm';
+import { RESIZE_ALGORITHM } from './algorithm';
 
 describe('newStateAlgorithm', () => {
   test('it should correctly resize an item', () => {
@@ -11,7 +11,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = 10;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -28,7 +28,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 1;
     const deltaSize = 10;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -44,7 +44,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = -40;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -60,7 +60,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = 40;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -76,7 +76,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = -60;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -92,7 +92,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 1;
     const deltaSize = 60;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -109,7 +109,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = -60;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -126,7 +126,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 1;
     const deltaSize = 60;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -143,7 +143,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [50, 50];
     const resizableItemIndex = 0;
     const deltaSize = -60;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,
@@ -161,7 +161,7 @@ describe('newStateAlgorithm', () => {
     const sizesOnResizeStart = [30, 50, 20];
     const resizableItemIndex = 1;
     const deltaSize = -50;
-    const result = newStateAlgorithm(
+    const result = RESIZE_ALGORITHM(
       resolvedLayout,
       sizesOnResizeStart,
       resizableItemIndex,

@@ -1,10 +1,10 @@
-import type { ParentComponent } from 'solid-js';
-import { createComputed, mergeProps, on, onCleanup, onMount, untrack, useContext } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
+import type { ParentComponent } from "solid-js";
+import { createComputed, createMemo, mergeProps, on, onCleanup, onMount, untrack, useContext } from "solid-js";
+import { Dynamic } from "solid-js/web";
 
-import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from './constants';
-import { PanelContext } from './PanelGroup';
-import { makeLogText } from './utils/log';
+import { CLASSNAMES, SOLID_PANEL_ID_ATTRIBUTE_NAME } from "./constants";
+import { PanelContext } from "./PanelGroup";
+import { makeLogText } from "./utils/log";
 
 export interface PanelProps {
   id: string;
@@ -54,36 +54,52 @@ export interface PanelProps {
 export const Panel: ParentComponent<PanelProps> = (initialProps) => {
   const props = mergeProps(
     {
-      tag: 'div',
+      tag: "div",
       minSize: 0,
       maxSize: 100,
       collapsible: false,
     },
-    initialProps,
+    initialProps
   );
 
   const context = useContext(PanelContext);
+  if (!context) throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
 
-  console.log(context);
+  const { registerPanel, unregisterPanel, getPanelSize } = context;
 
-  if (!context)
-    throw new Error(makeLogText(`Panel component must be rendered inside PanelGroup component`));
-
-  const { registerPanel, unregisterPanel, useData } = context;
-
-  const data = useData(props.id);
-
-  const size = () => data()?.size;
+  const panelSize = createMemo(() => getPanelSize(props.id));
 
   createComputed(
     on(
-      size,
-      (currentSize) => {
-        if (currentSize !== undefined) props.onResize?.(currentSize);
+      panelSize,
+      (currentPanelSize) => {
+        if (currentPanelSize !== undefined) props.onResize?.(currentPanelSize);
       },
-      { defer: true },
-    ),
+      { defer: true }
+    )
   );
+
+  // Effect for calling onExpand and onCollapse callbacks
+  createComputed(() => {
+    if (!props.collapsible) return;
+
+    createComputed(
+      on(
+        panelSize,
+        (currentSize, previousSize) => {
+          if (currentSize === undefined || previousSize === undefined) return;
+
+          if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
+
+          if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
+
+          return currentSize;
+        },
+        { defer: true }
+      ),
+      untrack(panelSize)
+    );
+  });
 
   onMount(() => {
     const panelId = props.id;
@@ -96,32 +112,10 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
         maxSize: props.maxSize,
         collapsible: props.collapsible,
       },
-      props.index,
+      props.index
     );
 
     onCleanup(() => unregisterPanel(panelId));
-  });
-
-  // Effect for calling onExpand and onCollapse callbacks
-  createComputed(() => {
-    if (!props.collapsible) return;
-
-    createComputed(
-      on(
-        size,
-        (currentSize, previousSize) => {
-          if (currentSize === undefined || previousSize === undefined) return;
-
-          if (currentSize === 0 && previousSize !== 0) props.onCollapse?.();
-
-          if (currentSize !== 0 && previousSize === 0) props.onExpand?.();
-
-          return currentSize;
-        },
-        { defer: true },
-      ),
-      untrack(size),
-    );
   });
 
   // Actually we may not render this until the data is computed,
@@ -130,12 +124,12 @@ export const Panel: ParentComponent<PanelProps> = (initialProps) => {
     <Dynamic
       {...{ [SOLID_PANEL_ID_ATTRIBUTE_NAME]: props.id }}
       component={props.tag}
-      classList={{ [CLASSNAMES.panel]: true, [props.class ?? '']: true }}
+      classList={{ [CLASSNAMES.panel]: true, [props.class ?? ""]: true }}
       style={{
-        'flex-grow': size(),
-        'flex-shrink': 1,
-        'flex-basis': '0px',
-        overflow: 'hidden',
+        "flex-grow": panelSize(),
+        "flex-shrink": 1,
+        "flex-basis": "0px",
+        overflow: "hidden",
       }}
     >
       {props.children}
