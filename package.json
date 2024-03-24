@@ -34,9 +34,11 @@
     "dev": "vite",
     "build:lib": "vite build",
     "build": "vite build -c vite-app.config.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "devDependencies": {
+    "jsdom": "^24.0.0",
     "solid-js": "^1.7.0",
     "typescript": "^5.4.2",
     "vite": "^5.1.6",
