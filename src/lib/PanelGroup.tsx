@@ -24,7 +24,7 @@ import { preprocessLayout } from './utils/preprocess-layout';
 import { CLASSNAMES, TOTAL_FLEX_GROW } from './constants';
 import { isHorizontalDirection } from './utils/direction';
 import { roundTo4Digits } from './utils/math';
-import { useTotalPanelSizePX } from './hooks/use-panel-size';
+import { createTotalPanelSizePX } from './hooks/create-total-panel-size';
 import { createMouseDelta } from './utils/mouse-delta';
 import { makeLogText } from './utils/log';
 
@@ -129,7 +129,7 @@ export interface PanelGroupProps {
 
 export const PanelContext = createContext<IPanelContext>();
 
-const isReverseDirection = (direction: Direction) => direction.includes('reverse');
+const isReverseDirection = (direction: Direction) => direction.endsWith('reverse');
 
 const createProcessedLayout = (logger?: Logger) => {
   const [initialLayout, setInitialLayout] = createSignal<LayoutItem[]>([]);
@@ -326,7 +326,7 @@ export const PanelGroup: ParentComponent<PanelGroupProps> = (initialProps) => {
 
             mouseDelta.init(e);
 
-            const totalPanelSizePX = useTotalPanelSizePX(
+            const totalPanelSizePX = createTotalPanelSizePX(
               containerRef,
               () => $state.currentLayout.length,
               () => props.direction,
