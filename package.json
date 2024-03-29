@@ -1,6 +1,6 @@
 {
   "name": "solid-resizable-panels",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Solid-js components for making resizable panels",
   "author": "Vladislav Lipatov",
   "type": "module",
