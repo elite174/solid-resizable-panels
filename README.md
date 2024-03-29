@@ -43,7 +43,9 @@ export declare type Direction = "row" | "column" | "row-reverse" | "column-rever
 export declare type LayoutItem = {
   id: string;
   size?: number;
+  /** A number from 0 to 100 */
   minSize: number;
+  /** A number from 0 to 100 */
   maxSize: number;
   collapsible: boolean;
 };
@@ -124,23 +126,7 @@ export declare interface PanelGroupProps {
    *
    * @returns The sizes of the items on the current resize event (mousemove or touchmove)
    */
-  resizeAlgorithm?: (
-    /** Current state of layout */
-    resolvedLayout: {
-      id: string;
-      size: number;
-      minSize: number;
-      maxSize: number;
-      collapsible: boolean;
-    }[],
-    /** Sizes on resize start */
-    sizesOnResizeStart: number[],
-    resizableItemIndex: number,
-    /**
-     * Delta size is computed from the initial size (before resize) and current state
-     */
-    deltaSize: number
-  ) => number[];
+  resizeAlgorithm?: ResizeAlgorithm;
 }
 
 export declare interface PanelProps {
@@ -187,6 +173,17 @@ export declare interface PanelProps {
   /** A callback called when size changes */
   onResize?: (newSize: number) => void;
 }
+
+export declare type ResizeAlgorithm = (
+  /** Current state of layout */
+  resolvedLayout: ResolvedLayoutItem[],
+  sizesOnResizeStart: number[],
+  resizableItemIndex: number,
+  /**
+   * Delta size is computed from the initial size (before resize) and current state
+   */
+  deltaSize: number
+) => number[];
 
 export declare const ResizeHandle: ParentComponent<ResizeHandleProps>;
 
