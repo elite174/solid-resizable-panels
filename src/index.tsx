@@ -8,7 +8,7 @@ import { PanelGroup, type PanelGroupAPI, Panel, ResizeHandle } from "./lib";
 import "./lib/styles.css";
 import "./styles.css";
 
-const DEBUG = true;
+const DEBUG = import.meta.env.DEV;
 
 const CodeExample: VoidComponent<{ ExampleComponent: VoidComponent; code: string }> = (props) => (
   <>
